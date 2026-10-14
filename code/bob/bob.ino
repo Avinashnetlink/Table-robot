@@ -1,0 +1,229 @@
+// Bob — complete firmware for the XIAO ESP32-S3 Sense table robot.
+// See README.md in this folder for setup, libraries and the laptop protocol.
+//
+// Board: XIAO_ESP32S3, PSRAM: OPI PSRAM, USB CDC On Boot: Enabled,
+//        Partition scheme: Default with spiffs (3MB APP/1.5MB SPIFFS).
+
+#include <WiFi.h>
+#include <Wire.h>
+#include "esp_task_wdt.h"
+#include "audio.h"
+#include "bus.h"
+#include "camera.h"
+#include "config.h"
+#include "display.h"
+#include "motion.h"
+#include "net.h"
+#include "pcf.h"
+#include "power.h"
+#include "safety.h"
+#include "sensors.h"
+#include "wiring.h"
+
+static uint32_t lastActivity = 0, lastStatus = 0;
+static bool wasConnected = false;
+static int16_t micBuf[MIC_CHUNK_SAMPLES];
+
+static void activity() { lastActivity = millis(); }
+
+static void sendEvent(const char *what, const char *detail, bool ok) {
+  JsonDocument doc;
+  doc["type"] = "event";
+  doc["what"] = what;
+  doc["detail"] = detail;
+  doc["ok"] = ok;
+  netSend(doc);
+}
+
+static void sendStatus() {
+  SafetySnapshot s = safetyGet();
+  JsonDocument doc;
+  doc["type"] = "status";
+  doc["state"] = speaking() ? "speaking" : s.moving ? "moving" : "awake";
+  doc["battery_v"] = serialized(String(s.battery, 2));
+  doc["battery_low"] = s.batteryWarn;
+  doc["sensors_ok"] = s.sensorsOk;
+  JsonArray table = doc["table"].to<JsonArray>();
+  JsonArray edge = doc["edge_v"].to<JsonArray>();
+  for (int i = 0; i < 3; i++) {
+    table.add(s.table[i]);
+    edge.add(serialized(String(s.edgeV[i], 3)));
+  }
+  doc["bumper"] = s.bumper;
+  doc["fault"] = s.fault;
+  doc["unlocked"] = s.unlocked;
+  doc["patrol"] = s.patrol;
+  doc["moving"] = s.moving;
+  doc["rssi"] = WiFi.RSSI();
+  netSend(doc);
+}
+
+static void sendPhoto() {
+  camera_fb_t *fb = cameraCapture();
+  if (!fb) {
+    sendEvent("photo", "camera failed", false);
+    return;
+  }
+  bool sent = netSendBinary(TAG_IMAGE, fb->buf, fb->len);
+  esp_camera_fb_return(fb);
+  if (!sent) sendEvent("photo", "send failed", false);
+}
+
+// ---------- Messages from the laptop ----------
+static void onText(JsonDocument &msg) {
+  const char *type = msg["type"] | "";
+
+  if (!strcmp(type, "ping")) {
+    JsonDocument r;
+    r["type"] = "pong";
+    netSend(r);
+    return;  // a ping is not activity
+  }
+  activity();
+
+  if (!strcmp(type, "show")) {
+    displaySetText(msg["line1"] | "", msg["line2"] | "", msg["ms"] | 8000);
+  } else if (!strcmp(type, "state")) {
+    displaySetMood(msg["state"] | "awake");
+  } else if (!strcmp(type, "listen")) {
+    displaySetMood(msg["active"] | false ? "listening" : "awake");
+  } else if (!strcmp(type, "say_end")) {
+    speakerEnd();
+  } else if (!strcmp(type, "move")) {
+    Dir d;
+    if (!parseDir(msg["dir"] | "", d)) {
+      sendEvent("move_result", "unknown direction (reverse is disabled)", false);
+    } else if (!safetyRequestMove(d, msg["duty"] | 0, msg["ms"] | 0)) {
+      sendEvent("move_result", "busy", false);
+    }
+  } else if (!strcmp(type, "patrol")) {
+    safetySetPatrol(msg["on"] | false);
+  } else if (!strcmp(type, "stop")) {
+    safetyStopAll("laptop stop");
+  } else if (!strcmp(type, "photo")) {
+    sendPhoto();
+  } else if (!strcmp(type, "sleep")) {
+    powerSleepNow();
+  }
+  // "keep_awake" and anything unknown only count as activity.
+}
+
+static void onBinary(uint8_t tag, const uint8_t *data, size_t len) {
+  if (tag == TAG_PLAY) {
+    activity();
+    speakerPlay(data, len);
+  }
+}
+
+// ---------- Setup ----------
+static void startWatchdog() {
+  esp_task_wdt_config_t cfg = {};
+  cfg.timeout_ms = WDT_TIMEOUT_MS;
+  cfg.idle_core_mask = 0;
+  cfg.trigger_panic = true;  // a hung task resets the board; the 100k pulldowns then stop the wheels
+  if (esp_task_wdt_reconfigure(&cfg) != ESP_OK) esp_task_wdt_init(&cfg);
+  esp_task_wdt_add(nullptr);
+}
+
+void setup() {
+  MotorPinsAtBoot bootPins = wiringReadMotorPins();  // only reads; must run before motionBegin()
+  motionBegin();  // motor inputs low before anything else
+  Serial.begin(115200);
+  busBegin();
+  bool pcfOk = pcfBegin();  // the PCF8574 kept its old outputs through the reset
+  delay(300);
+  Serial.printf("\nBob %s, woke by %s\n", FIRMWARE, wakeReason());
+
+  bool oledOk = displayBegin();
+  displaySetText("Hello!", wakeReason(), 3000);
+  displaySetMood("offline");
+  bool adsOk = sensorsBegin();
+  touchBegin();
+  bool audioOk = audioBegin();
+  bool camOk = cameraBegin();
+  Serial.printf("PCF8574 %s, OLED %s, ADS1115 %s, audio %s, camera %s\n", pcfOk ? "ok" : "MISSING",
+                oledOk ? "ok" : "MISSING", adsOk ? "ok" : "MISSING", audioOk ? "ok" : "FAIL", cameraName());
+  if (!pcfOk || !adsOk) Serial.println("Motion stays disabled: the expander or ADC is missing.");
+
+  wiringCheck(bootPins, pcfOk, oledOk, adsOk, audioOk, camOk);
+  wiringPrint();
+  if (wiringProblems()) displaySetText("Wiring!", wiringFirstProblem(), 6000);
+  else displaySetText("Hello!", "wiring OK", 3000);
+
+  startWatchdog();  // before the safety task starts, so it can subscribe
+  safetyBegin();
+  netBegin(onText, onBinary);
+  activity();
+}
+
+// ---------- Loop ----------
+void loop() {
+  esp_task_wdt_reset();
+  uint32_t now = millis();
+
+  netLoop();
+  bool connected = netConnected();
+  if (connected != wasConnected) {
+    wasConnected = connected;
+    displaySetMood(connected ? "awake" : "offline");
+    if (connected) {
+      JsonDocument report;
+      wiringToJson(report);
+      netSend(report);
+    } else {
+      safetyStopAll("laptop link lost");
+    }
+  }
+
+  switch (touchService()) {
+    case TouchEvent::Hold:
+      safetySetUnlocked(true);
+      displaySetText("Drive", "unlocked", 2000);
+      sendEvent("touch", "hold", true);
+      activity();
+      break;
+    case TouchEvent::Tap: {
+      SafetySnapshot s = safetyGet();
+      if (s.patrol || s.moving) {
+        safetyStopAll("touch");
+        displaySetText("Stopped", "by touch", 2000);
+      }
+      sendEvent("touch", "tap", true);
+      activity();
+      break;
+    }
+    default:
+      break;
+  }
+
+  SafetyEvent e;
+  while (safetyPopEvent(e)) {
+    sendEvent(e.what, e.detail, e.ok);
+    Serial.printf("[%s] %s\n", e.what, e.detail);
+    if (!strcmp(e.what, "bumper") || !strcmp(e.what, "fault") || !strcmp(e.what, "sensor")) {
+      displaySetText("Stop!", e.detail, 3000);
+    } else if (!strcmp(e.what, "battery")) {
+      if (!strcmp(e.detail, "empty")) powerSleepNow();
+      displaySetText("Battery", "low - charge me", 5000);
+    }
+  }
+
+  audioService();
+  if (connected && micAllowed()) {
+    size_t n = micRead(micBuf, MIC_CHUNK_SAMPLES);
+    if (n) netSendBinary(TAG_MIC, (const uint8_t *)micBuf, n * sizeof(int16_t));
+  } else {
+    delay(5);
+  }
+
+  SafetySnapshot s = safetyGet();
+  if (connected && now - lastStatus > STATUS_EVERY_MS) {
+    lastStatus = now;
+    sendStatus();
+  }
+  displayUpdate(s.battery, s.batteryWarn, netWifiUp(), s.unlocked, s.patrol);
+
+  bool busy = s.patrol || s.moving || speaking() || touchDown();
+  if (busy) activity();
+  if (millis() - lastActivity > SLEEP_AFTER_MS) powerSleepNow();
+}

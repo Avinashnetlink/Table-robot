@@ -1,0 +1,30 @@
+# Wi-Fi name, password, and laptop IP.
+# Copy each secrets.example.h to secrets.h in the same folder.
+secrets.h
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Laptop server data (reminders and photos Bob sends)
+code/laptop/reminders.db
+code/laptop/reminders.db-journal
+code/laptop/photos/
+
+# Arduino build output
+build/
+*.elf
+*.bin
+*.map
+*.hex
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.code-workspace
