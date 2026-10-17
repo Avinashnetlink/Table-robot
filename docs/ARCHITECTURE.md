@@ -77,7 +77,7 @@ The user-visible features retained are touch wake/arm/stop, OLED moods and text,
 
 ## ToF acquisition
 
-`BOB_EDGE_SENSOR=6180` uses Pololu VL6180X 1.4.0; `530` uses VL53L0X 1.3.1. Only the selected driver is linked. All three physical modules must match. The mux is 0x70 and each branch device is 0x29. Each access holds the bus lock across channel selection/read-back, sensor transactions and channel isolation.
+The selected circuit and default build use `BOB_EDGE_SENSOR=530` (three VL53L0X modules). The legacy `BOB_EDGE_SENSOR=6180` uses Pololu VL6180X 1.4.0; `530` uses VL53L0X 1.3.1. Only the selected driver is linked. All three physical modules must match. The mux is 0x70 and each branch device is 0x29. Each access holds the bus lock across channel selection/read-back, sensor transactions and channel isolation.
 
 VL6180X uses 16-bit register addresses, 30 ms maximum convergence and a 50 ms period; accepted native status is 0, range ≤100 mm. VL53L0X uses 8-bit register addresses, a 33 ms timing budget and 50 ms period; accepted device status is 11, 0 < range <2000 mm. Runtime reads and interrupt clears check ACK and byte count. These checks supplement, not replace, physical surface validation.
 

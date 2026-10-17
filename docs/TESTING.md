@@ -6,7 +6,7 @@
 pip install -r code/laptop/requirements.txt
 python tools/test.py
 python tools/build_firmware.py --install --all
-python tools/build_firmware.py --edge-sensor vl53l0x --output build-vl53l0x
+python tools/build_firmware.py --edge-sensor vl6180x --output build-vl6180x # legacy adapter check
 ```
 
 The host suite uses a C++17 compiler with ASan/UBSan and Python `unittest`. Local WebSocket integration tests bind an ephemeral **127.0.0.1** port. If an execution sandbox blocks localhost, grant that test process local socket access rather than silently skipping integration tests. CI repeats host checks and builds both firmware variants and the 12 component sketches with example secrets.
@@ -20,7 +20,7 @@ Recorded software results are in [VALIDATION.md](VALIDATION.md). **Every physica
 - [ ] Fill [INVENTORY.md](INVENTORY.md); record exact board, camera, driver, ADC and amplifier variants.
 - [ ] Remove cell and USB. Inspect polarity, shorts, capacitor polarity, transistor pinouts and strain relief.
 - [ ] Verify external motor pulldowns, correct J3 isolation, empty SD socket and intact microphone jumpers.
-- [ ] Confirm all logic pull-ups go to 3.3 V and SDA/SCL resistance is appropriate for combined modules.
+- [ ] Follow [the complete circuit](CIRCUIT.md): upstream pull-ups to 3V3; each sensor-side branch uses its verified carrier interface rail. Confirm combined SDA/SCL resistance and XSHUT pull-ups. Never pull an unshifted 2.8 V interface to 3V3 blindly.
 - [ ] Check SW2 opens only motor VM and remains effective with USB present; label it.
 - [ ] Inspect fuse/holder, wire and switch current ratings. Choose fuse from measured current, not capacity in mAh.
 

@@ -1,6 +1,8 @@
 # Review and remaining work
 
-## Current revision 3 changes
+## Current revision 3.1 changes
+
+The owner selected Robu VL53L0X. CLI/IDE defaults, inventory and full circuit sheets now match three VL53L0X modules. The previous VL6180X driver remains an explicitly selected legacy option.
 
 - Replaced the three reflective edge sensors with three matching VL6180X or VL53L0X modules through TCA9548A channels 0/1/2. Both sensor families compile from the same configuration interface.
 - Added checked model identity, mux selection/read-back, range status, interrupt clear and oldest-acquisition timing. Duplicate polls cannot reacquire a surface or refresh stale data. Too near, too far, invalid, missing or stale readings inhibit motion.

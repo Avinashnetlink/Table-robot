@@ -35,7 +35,7 @@ constexpr bool CALIBRATION_CONFIRMED = false;  // set true ONLY after docs/TESTI
 constexpr bool BUMPER_NC_SERIES = false;  // existing NO parallel wiring; optional NC series upgrade
 // All three edge modules must use the selected family. Do not mix sensor types.
 #ifndef BOB_EDGE_SENSOR
-#define BOB_EDGE_SENSOR 6180  // 6180 = GY-6180 VL6180X; 530 = VL53L0X
+#define BOB_EDGE_SENSOR 530  // fitted hardware: 3 x VL53L0X; legacy option: 6180
 #endif
 #if BOB_EDGE_SENSOR != 6180 && BOB_EDGE_SENSOR != 530
 #error "BOB_EDGE_SENSOR must be 6180 or 530"

@@ -14,7 +14,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--install", action="store_true", help="install pinned core and libraries")
     p.add_argument("--all", action="store_true", help="also compile the 12 component sketches")
-    p.add_argument("--edge-sensor", choices=("vl6180x", "vl53l0x"), default="vl6180x", help="family fitted to all three downward sensors")
+    p.add_argument("--edge-sensor", choices=("vl6180x", "vl53l0x"), default="vl53l0x", help="family fitted to all three downward sensors (default: vl53l0x)")
     p.add_argument("--local-secrets", action="store_true", help="compile your real network credentials for flashing")
     p.add_argument("--output", type=Path, default=ROOT / "build")
     args = p.parse_args()

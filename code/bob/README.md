@@ -8,4 +8,4 @@ A valid physical 2-second touch hold arms motion only when every input is health
 
 USB commands at 115200 baud: `status`, `wiring`, `stop` plus newline. JSON telemetry includes timing, fault reasons, calibrated state, battery validity and optional range. No serial command bypasses physical arming.
 
-Three ToF sensors are mandatory, on TCA9548A channels 0/1/2. Select one family for all three with `BOB_EDGE_SENSOR=6180` or `530`. `edge_mm`, `edge_valid` and `edge_status` replace the old analog `edge_v` telemetry. Use T09 to calibrate physical mounting and desk bands.
+Three ToF sensors are mandatory, on TCA9548A channels 0/1/2. Your three VL53L0X modules use the default `BOB_EDGE_SENSOR=530`. The legacy 6180 adapter remains available but is not part of the selected circuit. `edge_mm`, `edge_valid` and `edge_status` replace the old analog `edge_v` telemetry. Use T09 to calibrate physical mounting and desk bands.

@@ -8,10 +8,9 @@ Install Arduino CLI and Python 3.12. From the repository root:
 
 ```sh
 python3 tools/build_firmware.py --install --all
-python3 tools/build_firmware.py --edge-sensor vl53l0x --output build-vl53l0x
 ```
 
-This pins Arduino ESP32 **3.3.12**, XIAO_ESP32S3, OPI PSRAM and USB CDC; dependencies are pinned in the build script. The default 8 MB partition scheme supplies a 3 MB application partition. Verification stages a temporary source copy with **example** secrets, never the real Wi-Fi credentials. `--all` includes all 12 component sketches (T09 uses the full firmware). `--edge-sensor vl6180x` is the default for three GY-6180 modules; use `--edge-sensor vl53l0x` for three VL53L0X modules. Wrong/missing sensors keep motion locked. In Arduino IDE set `BOB_EDGE_SENSOR` to 6180 or 530 in `config.h`.
+This pins Arduino ESP32 **3.3.12**, XIAO_ESP32S3, OPI PSRAM and USB CDC; dependencies are pinned in the build script. The default 8 MB partition scheme supplies a 3 MB application partition. Verification stages a temporary source copy with **example** secrets, never the real Wi-Fi credentials. `--all` includes all 12 component sketches (T09 uses the full firmware). The default is `--edge-sensor vl53l0x` for your three Robu VL53L0X modules. Arduino IDE also defaults to `BOB_EDGE_SENSOR=530` in `config.h`. Wrong/missing sensors keep motion locked. The tested VL6180X adapter remains available only for a future hardware change (`--edge-sensor vl6180x`, or `BOB_EDGE_SENSOR=6180` in the IDE).
 
 If Arduino IDE is preferred, install the same versions listed in `tools/build_firmware.py`, choose **XIAO_ESP32S3 / OPI PSRAM / USB CDC enabled / default 8 MB partition**, then open the sketch. Do not use an older generic ESP32 partition setting or the Plus pinout. ESP32 core 2.x APIs are incompatible.
 
@@ -23,7 +22,7 @@ If Arduino IDE is preferred, install the same versions listed in `tools/build_fi
 4. Keep SW2 motor power off. Compile with real credentials:
 
 ```sh
-python3 tools/build_firmware.py --local-secrets --edge-sensor vl6180x
+python3 tools/build_firmware.py --local-secrets --edge-sensor vl53l0x
 arduino-cli board list
 arduino-cli upload --fqbn esp32:esp32:XIAO_ESP32S3:PSRAM=opi,CDCOnBoot=cdc \
   --input-dir build/bob --port /dev/cu.usbmodemXXXX

@@ -19,7 +19,7 @@ Inventory status is **unknown**. No item has been marked owned or tested. Check 
 | N12 5 V ~57 RPM gearmotor | 2 | [ ] | [ ] | [ ] | Record exact model, shaft and current; encoder wires unused; T08 |
 | 34 mm wheels matching actual shaft | 2 | [ ] | [ ] | [ ] | Buy after measuring shaft; 3 mm D-shaft only if motors match |
 | DRV8833 dual driver module | 1 | [ ] | [ ] | [ ] | Actual DRV8833; exposes nSLEEP + nFAULT; no hard-tied enable; T07/T08 |
-| GY-6180 VL6180X **or** VL53L0X carrier (choose one family) | 3 | [ ] | [ ] | [ ] | Downward left/right/center; three matching boards; 3.3 V VIN/host compatibility; T09 |
+| Robu VL53L0X carrier (selected) | 3 | [ ] | [ ] | [ ] | Downward left/right/center; three matching boards; 3.3 V VIN/host compatibility; T09 |
 | TCA9548A carrier | 1 | [ ] | [ ] | [ ] | Required: channels 0/1/2, address 0x70; RESET pull-up; T03/T09 |
 | ADS1115 (not ADS1015) | 1 | [ ] | [ ] | [ ] | 3.3 V supply, ADDR grounded for 0x48; battery A3 only, unused A0–A2 to GND; T03/T06 |
 | PCF8574 / PCF8574A breakout | 1 | [ ] | [ ] | [ ] | 3.3 V, address 0x20 / 0x38, three address straps grounded; T03/T07 |
@@ -37,9 +37,9 @@ Used counts match the base circuit; ordering small packs is convenient. These ar
 | --- | ---: | :---: | :---: | :---: | --- |
 | 100 kΩ resistors | 11 | [ ] | [ ] | [ ] | R1/R2 divider; R3–R6 pulldowns; R15/R16/R18/R19 inverter bias; R22 gain |
 | 22 kΩ resistors | 2 | [ ] | [ ] | [ ] | R17/R20 enable pull-ups |
-| 10 kΩ resistors | 2 + 1 if missing on mux | [ ] | [ ] | [ ] | R14 bumper, R21 fault; R25 mux RESET if not fitted |
+| 10 kΩ resistors | 2 + up to 4 if missing on carriers | [ ] | [ ] | [ ] | R14 bumper, R21 fault; R25 mux RESET if not fitted; R32–R34 XSHUT only if missing on sensors (add up to 3) |
 | 470 Ω resistors | 1 | [ ] | [ ] | [ ] | R13 touch series |
-| 4.7 kΩ resistors | As measured on upstream + 3 branches | [ ] | [ ] | [ ] | R23/R24 upstream I²C plus branch pull-ups only if absent; inspect carriers |
+| 4.7 kΩ resistors | As measured on upstream + 3 branches | [ ] | [ ] | [ ] | R23/R24 upstream; R26–R31 branch pull-ups only if absent; inspect carriers and correct pull-up rail |
 | 100 nF ceramic capacitors | 7 + missing module decoupling | [ ] | [ ] | [ ] | C2/C3/C4/C6/C8/C9/C14; add at each IC if breakout lacks them |
 | 1000 µF electrolytic, ≥10 V | 1 | [ ] | [ ] | [ ] | C1 at driver VM; correct polarity; measure inrush |
 | 100 µF electrolytic, ≥10 V | 1 | [ ] | [ ] | [ ] | C5 at amplifier |
@@ -47,8 +47,8 @@ Used counts match the base circuit; ordering small packs is convenient. These ar
 | 22–24 AWG flexible power wire | As needed | [ ] | [ ] | [ ] | Short battery, VM, amplifier and ground runs |
 | 26–30 AWG signal wire | As needed | [ ] | [ ] | [ ] | Short I²C and analog wiring |
 | Heat-shrink, insulated connectors, strain relief | Set | [ ] | [ ] | [ ] | No exposed battery or motor terminals |
-| Perfboard + secure ToF/mux headers | Set | [ ] | [ ] | [ ] | GY-6180 is unsoldered; solder headers and inspect joints |
-| Motor brackets, screws, chassis, sensor shrouds | Set | [ ] | [ ] | [ ] | ToF mounting trial ~30 mm (6180) / ~60 mm (530); validate lip and stopping margin |
+| Perfboard + secure ToF/mux headers | Set | [ ] | [ ] | [ ] | Solder required headers; inspect joints and printed pin labels |
+| Motor brackets, screws, chassis, sensor shrouds | Set | [ ] | [ ] | [ ] | VL53L0X mounting trial ~60 mm; validate lip and stopping margin |
 
 ## Optional improvements — order only if wanted or required by tests
 
@@ -83,6 +83,6 @@ Used counts match the base circuit; ordering small packs is convenient. These ar
 | Deep sleep current + deliberate wake tested | __________ mA | [ ] |
 | All fault-injection tests from TESTING.md complete | Date: __________ | [ ] |
 
-Product choices: [GY-6180 VL6180X](https://robu.in/product/unsoldered-blue-gy-6180-vl6180x-light-sensor-distance-measurement-gesture-recognition-module/) or [VL53L0X](https://robu.in/product/vl53l0x-tof-based-lidar-laser-distance-sensor/). Order **three of one type**, not one of each. No GP2S sensors or LED drive components are needed.
+Selected product: [Robu VL53L0X](https://robu.in/product/vl53l0x-tof-based-lidar-laser-distance-sensor/). The circuit requires **three matching modules**. The family is confirmed; quantity owned and bench results are still to be recorded. No GP2S sensors or LED drive components are needed.
 
 Only after the final row passes: set `CALIBRATION_CONFIRMED = true`, rebuild, and perform supervised floor tests before any raised-table test.

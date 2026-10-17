@@ -1,14 +1,14 @@
-# Hardware and circuit — revision 3
+# Hardware and circuit — revision 3.1 / VL53L0X
 
-Three **downward-facing ToF sensors replace the reflective edge sensors**. Fit three modules of one family: [Robu GY-6180 / VL6180X](https://robu.in/product/unsoldered-blue-gy-6180-vl6180x-light-sensor-distance-measurement-gesture-recognition-module/) or [Robu VL53L0X](https://robu.in/product/vl53l0x-tof-based-lidar-laser-distance-sensor/). The firmware supports either family, selected at build time. Do not mix them. These are edge sensors; there is no separate forward range sensor in this circuit. Obstacle contact is detected by the bumpers.
+The selected circuit uses **three downward-facing [Robu VL53L0X modules](https://robu.in/product/vl53l0x-tof-based-lidar-laser-distance-sensor/)** on one TCA9548A multiplexer. Left, right and center sensors replace the reflective edge sensors. CLI and Arduino IDE builds now default to VL53L0X (`BOB_EDGE_SENSOR=530`). Bumpers provide forward contact detection.
 
 ![Current circuit](../images/bob-wiring.png)
 
-[Editable SVG](../images/bob-wiring.svg) · [Have/order checklist](INVENTORY.md) · [Calibration and tests](TESTING.md)
+[Complete circuit sheets and every connection](CIRCUIT.md) · [Editable overview SVG](../images/bob-wiring.svg) · [Have/order checklist](INVENTORY.md) · [Calibration and tests](TESTING.md)
 
 ## ToF connections
 
-Both sensor families use **7-bit address 0x29**. A **TCA9548A** at **0x70** selects one branch at a time. This avoids address collisions without consuming additional XIAO pins. Firmware verifies the selected channel and isolates all channels after access. See the [TI TCA9548A datasheet](https://www.ti.com/lit/ds/symlink/tca9548a.pdf).
+All three VL53L0X modules use **7-bit address 0x29** (ST also writes the 8-bit write address as 0x52). A **TCA9548A** at **0x70** selects one branch at a time. This avoids address collisions without consuming additional XIAO pins. Firmware verifies the selected channel and isolates all channels after access. See the [TI TCA9548A datasheet](https://www.ti.com/lit/ds/symlink/tca9548a.pdf).
 
 | Connection | Destination |
 | --- | --- |
@@ -21,21 +21,23 @@ Both sensor families use **7-bit address 0x29**. A **TCA9548A** at **0x70** sele
 | Mux SD1 / SC1 | Right sensor SDA / SCL |
 | Mux SD2 / SC2 | Center sensor SDA / SCL |
 | Each sensor carrier VIN/VCC / GND | 3V3 / common GND **after carrier compatibility check below** |
-| Sensor XSHUT / GPIO0 / interrupt | No XIAO connection; enable must be held at the proper sensor-domain level by the carrier |
+| Each XSHUT / XSD / SHDN (if exposed) | Leave header unwired only when a carrier pull-up already holds it high; otherwise add 10 kΩ to that sensor’s verified logic supply, typically its regulated 2.8 V rail |
+| Each GPIO1 / INT / GPIO (if exposed) | Unconnected; firmware polls over I²C |
 | Mux channels 3–7 | Unconnected |
 
-Use the printed pin names, not a presumed physical header order. Do not connect the three sensor SDA/SCL pairs directly together. Each mux branch needs suitable pull-ups; inspect carrier resistors before adding more. The upstream bus and host-facing branches must stay at 3.3 V-compatible levels. Fit local 100 nF decoupling where a carrier lacks it. Keep wiring short and place the modules securely at the sensor lip.
+Use the printed pin names, not a presumed physical header order. Do not connect the three sensor SDA/SCL pairs directly together. Each mux branch needs suitable pull-ups; inspect carrier resistors before adding more. The upstream bus uses 3V3 pull-ups; branch pull-up rails must match each carrier interface as described below. Fit local 100 nF decoupling where a carrier lacks it. Keep wiring short and place the modules securely at the sensor lip.
 
-The linked products identify the intended modules, but the pages did not expose a reliable carrier schematic during this review. **Check the delivered boards' regulator, pull-ups and level shifting before power.** The bare VL6180X operates at 2.6–3.0 V, so a bare IC or unregulated 2.8 V input must not be connected to 3V3. The circuit assumes a carrier that accepts 3.3 V at VIN and exposes compatible host I²C. Do not use 5 V pull-ups or connect XSHUT/GPIO pins blindly to 3V3. A carrier that requires 5 V input or lacks suitable translation needs a revised power/interface connection; the product name alone is insufficient evidence.
+The product page did not expose a verifiable carrier schematic or physical header order. **Use the delivered board's printed labels; do not copy left-to-right pin positions from another carrier.** This design feeds the carrier's 3.3 V-compatible **VIN/VCC input**, not a regulator output. Check its regulator and host-facing I²C before power. No external sensor wire goes to XIAO 5V.
+
+An unshifted sensor interface must use pull-ups to its actual sensor logic rail. The TCA9548A supports different pull-up rails on separate segments; it does not generate that rail. A carrier with a regulated 2.8 V sensor and unshifted pins needs sensor-side pull-ups/XSHUT tied to that 2.8 V rail, not blindly to 3V3. Keep existing correct carrier pull-ups; add branch resistors only after checking them. If the required rail is inaccessible, use a documented compatible carrier instead of guessing. See [ST's VL53L0X electrical and application circuit requirements](https://www.st.com/resource/en/datasheet/vl53l0x.pdf).
 
 ## Sensor selection and mounting
 
-| Family | Build option | Initial mounting trial | Default desk band — **not calibration** |
+| Selected sensor | Firmware | Initial mounting trial | Default desk band — **not calibration** |
 | --- | --- | --- | --- |
-| GY-6180 / VL6180X | `--edge-sensor vl6180x` (default) | Approximately 30 mm above the tabletop | 15–45 mm |
-| VL53L0X | `--edge-sensor vl53l0x` | Approximately 60 mm above the tabletop | 40–80 mm |
+| Three Robu VL53L0X modules | `BOB_EDGE_SENSOR=530`; CLI default or `--edge-sensor vl53l0x` | Approximately 60 mm above the tabletop | 40–80 mm on each channel |
 
-[ST specifies VL6180X performance through 100 mm](https://www.st.com/resource/en/datasheet/vl6180x.pdf); longer reach is conditional. Firmware keeps its accepted desk band within 100 mm. VL53L0X has different close-range behavior; verify the selected height against [ST's sensor specification](https://www.st.com/resource/en/datasheet/vl53l0x.pdf) and actual module readings. Neither is a drop-in mechanical replacement at the old ~3 mm mounting height.
+The old ~3 mm mounting height is unsuitable for this design. Measure actual readings at the intended height and replace the placeholder bands using T09. The older VL6180X adapter remains available in source for compatibility but is not part of this circuit or shopping list.
 
 Point all three sensors vertically down. Start with the sensing line at least 25 mm ahead of the wheels, then validate `overhang > measured optical edge-transition offset + speed × worst detection latency + coast distance + margin`. The beam can still see the desk after its center passes the edge; measure that transition offset instead of treating the sensor as a point. Keep the optical field of view clear of chassis/wheels. Test glossy, dark, patterned and transparent surfaces, bright ambient light, tilt and mutual interference with all three sensors active. A nearby lower shelf or floor can return a plausible distance: reject any geometry where a drop still falls inside the calibrated desk band.
 
