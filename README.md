@@ -20,7 +20,7 @@ Revision 3.1 uses **three downward-facing Robu VL53L0X modules through one TCA95
 | `build/` | Generated firmware and captured test logs; created by tools, ignored by Git |
 | `.github/` | Automated CI configuration for software checks and compilation |
 
-**Build/test order:** [Have / Order checklist](docs/INVENTORY.md) → [individual parts and circuits](code/tests/README.md) → [main firmware + laptop setup](code/README.md) → [complete robot acceptance](docs/TESTING.md).
+**Build/test order:** [Components: purpose + Have / Order checklist](docs/INVENTORY.md) → [individual parts and circuits](code/tests/README.md) → [main firmware + laptop setup](code/README.md) → [complete robot acceptance](docs/TESTING.md).
 
 `code/tests/` covers individual component diagnostics. The root `tests/` covers automated software checks. **The complete physical robot test procedure is `docs/TESTING.md`.**
 
