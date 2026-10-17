@@ -2,13 +2,15 @@
 
 Revision 3.1 uses **three downward-facing Robu VL53L0X modules through one TCA9548A multiplexer**. VL53L0X is now the default in both Arduino IDE and CLI builds. These replace the old reflective edge sensors; one module cannot cover all three edge positions. The bumpers provide forward contact detection.
 
-![Current wiring](images/bob-wiring.png)
+![Full pin-to-pin schematic](images/bob-wiring.png)
+
+[Open the full-size PNG](images/bob-wiring.png) · [Zoomable SVG](images/bob-wiring.svg) · [Individual component connections](docs/CIRCUIT.md)
 
 | Document | Purpose |
 | --- | --- |
 | [Have / Order / Tested checklist](docs/INVENTORY.md) | Required parts, quantities and measurements |
 | [Circuit and pin table](docs/HARDWARE.md) | Selected VL53L0X wiring, power and GPIO mapping |
-| [Complete circuit sheets and connection list](docs/CIRCUIT.md) | All module pins, motor/audio enables, resistors and capacitors |
+| [Full pin-to-pin schematic and connection list](docs/CIRCUIT.md) | All module pins, motor/audio enables, resistors and capacitors |
 | [Build and setup](code/README.md) | Select the sensor family, configure credentials and upload |
 | [Tests and calibration](docs/TESTING.md) | Automated checks and staged physical commissioning |
 | [Architecture](docs/ARCHITECTURE.md) | Modules, safety policy and protocol |

@@ -1,15 +1,23 @@
-# Complete module circuit — revision 3.1 / three VL53L0X
+# Complete pin-to-pin circuit — drawing revision 3.2 / three VL53L0X
 
 This is the complete **external module wiring** for the selected robot, including every added resistor and capacitor. Camera, microphone, regulators, charging and driver support components already fitted to their respective boards remain on those boards. It is not a bare-IC PCB fabrication schematic. Match module pin labels rather than header positions; Robu's exact carrier schematic and supplied board revision could not be verified from the listing.
 
-| Sheet | PNG | Editable SVG |
-| --- | --- | --- |
-| System overview | [Overview](../images/bob-wiring.png) | [SVG](../images/bob-wiring.svg) |
-| 1 — Power, controller, touch, bumpers, battery ADC | [Sheet 1](../images/bob-circuit-1.png) | [SVG](../images/bob-circuit-1.svg) |
-| 2 — I²C, display, expander, mux and three VL53L0X modules | [Sheet 2](../images/bob-circuit-2.png) | [SVG](../images/bob-circuit-2.svg) |
-| 3 — Motor driver, amplifier and enable inverters | [Sheet 3](../images/bob-circuit-3.png) | [SVG](../images/bob-circuit-3.svg) |
+**Start with the full schematic below.** It follows the supplied reference layout: continuous signal wires to labelled pins, individual external component symbols, connection dots and bridges for crossings. The electrical design and VL53L0X firmware selection remain revision 3.1; revision 3.2 changes the drawing and its verification.
 
-Identical **net labels** on any sheet are electrically joined. A connection dot marks a junction. `NC` means leave unconnected. `3V3` means the XIAO's regulated output; `VBAT` is the fused/switched cell rail; `VM` is downstream of the motor kill switch. All GND labels share the same ground. Sensor bus rails `VIO_L/R/C` and sensor logic rails `VLOGIC_L/R/C` depend on the carrier; they are not additional XIAO outputs. A level-shifted bus can use 3V3 while an unshifted XSHUT still needs the sensor logic rail.
+![Full pin-to-pin circuit](../images/bob-wiring.png)
+
+| View | PNG | Zoomable SVG |
+| --- | --- | --- |
+| **Full circuit — every external component on one sheet** | [Full-resolution PNG](../images/bob-wiring.png) | [Full vector schematic](../images/bob-wiring.svg) |
+| Detail crop: power, touch, bumpers, controller and motor supply | [Power/controller](../images/bob-circuit-1.png) | [SVG](../images/bob-circuit-1.svg) |
+| Detail crop: three VL53L0X sensors, mux, OLED, ADC and expander | [Sensors/shared bus](../images/bob-circuit-2.png) | [SVG](../images/bob-circuit-2.svg) |
+| Detail crop: motor, audio and enable circuits | [Motors/audio](../images/bob-circuit-3.png) | [SVG](../images/bob-circuit-3.svg) |
+
+The master PNG is **5760 × 4480 pixels**. Use the SVG to zoom without blurring; the inline preview reduces the whole sheet. Detail images are crops of that same schematic, so wires at a crop boundary continue on the full sheet. They are not separate circuit designs.
+
+U1=XIAO, U2=OLED, U3=ADS1115, U4=PCF8574, U5=TCA9548A, U6/U7/U8=left/right/center VL53L0X, U9=DRV8833 and U10=MAX98357A. SW3/SW4 are the bumper switches. Component names match the tables below.
+
+Identical **power and BAT_SENSE labels** are electrically joined; these short named connections avoid running power wires across every device. Sensor control and motor/audio signal wires are drawn continuously on the full sheet. A connection dot marks a junction. `NC` means leave unconnected. `3V3` means the XIAO's regulated output; `VBAT` is the fused/switched cell rail; `VM` is downstream of the motor kill switch. All GND labels share the same ground. Sensor bus rails `VIO_L/R/C` and sensor logic rails `VLOGIC_L/R/C` depend on the carrier; they are not additional XIAO outputs. A level-shifted bus can use 3V3 while an unshifted XSHUT still needs the sensor logic rail.
 
 ## 1. Battery and power — connect these first with USB and cell removed
 
@@ -156,4 +164,4 @@ Default `BUMPER_NC_SERIES=false` matches these parallel NO switches. Optional NC
 
 R7–R12 and C10–C13 were removed with the analog edge circuit; numbering gaps are intentional. Add local 100 nF decoupling on any carrier that lacks it; retain manufacturer-required onboard bulk/IC capacitors. Electrolytics require correct polarity. `BAT_SENSE` is approximately half VBAT (2.1 V at full charge); it goes to **ADS1115 A3**, not a XIAO pin.
 
-Regenerate the PNG/SVG drawings with `python tools/draw_circuit.py` (Matplotlib required). Before wiring, complete [inventory](INVENTORY.md); before motion, follow [power checks](HARDWARE.md) and [commissioning](TESTING.md). Physical voltage/current, optical performance and stopping distance remain unverified.
+Regenerate the master schematic and its detail crops with `python tools/draw_circuit.py` (Matplotlib required). The generator checks every drawn component terminal for a wire on the correct named net, rejects different-net wire overlaps/endpoints, and marks crossings automatically. The generated [terminal netlist](circuit-netlist.json) allows each component connection to be traced by reference. These checks verify the drawing, not the delivered carrier or electrical performance. Before wiring, complete [inventory](INVENTORY.md); before motion, follow [power checks](HARDWARE.md) and [commissioning](TESTING.md). Physical voltage/current, optical performance and stopping distance remain unverified.

@@ -4,7 +4,7 @@ The selected circuit uses **three downward-facing [Robu VL53L0X modules](https:/
 
 ![Current circuit](../images/bob-wiring.png)
 
-[Complete circuit sheets and every connection](CIRCUIT.md) · [Editable overview SVG](../images/bob-wiring.svg) · [Have/order checklist](INVENTORY.md) · [Calibration and tests](TESTING.md)
+[Full pin-to-pin schematic and every connection](CIRCUIT.md) · [Zoomable SVG](../images/bob-wiring.svg) · [Have/order checklist](INVENTORY.md) · [Calibration and tests](TESTING.md)
 
 ## ToF connections
 

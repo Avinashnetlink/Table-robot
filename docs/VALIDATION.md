@@ -38,3 +38,12 @@ The application partition limit is 3,342,336 bytes; static RAM limit is 327,680 
 The updated overview and all three detailed PNG circuit sheets were visually inspected; editable SVGs are supplied. Local links in all 25 Markdown files resolve. Python compile checks and git whitespace checks passed. Superseded diagrams, planning copies and the analog edge sketch were removed.
 
 Pending physical work: delivered carrier voltage/logic compatibility, mux branch pull-ups, channel mapping, ToF mounting/calibration and interference, current/charging measurements, stopping margin, actual camera/audio/sleep behavior, endurance and real Wi-Fi/device integration. Optional STT/OCR/TTS backends remain untested. Follow [TESTING.md](TESTING.md) and [INVENTORY.md](INVENTORY.md); software validation does not qualify the robot for unattended use.
+
+
+## Drawing revision 3.2 — full schematic redraw
+
+Replaced the block-style overview and separate summary sheets with one complete pin-to-pin drawing and three detail crops of the same source. All external resistors, capacitors, transistors, motors, speaker, fuse and switches are explicit symbols. Signal wires run to their module pins; power and battery-sense flags share named nets.
+
+The generator verified **210 component terminals**, **49 named nets** and **31 unjoined wire crossings**. It rejects wrong-net wires at terminals, unconnected terminals, touching/overlapping different-net wire segments, and wires passing through module or passive-symbol bodies. Seventeen critical sensor, motor, audio and battery nets were also checked against the project pin assignments; local Markdown links and the whitespace check passed. Full-resolution output is 5760 × 4480 PNG plus editable SVG; all views were visually inspected. The generated terminal netlist is in `docs/circuit-netlist.json`.
+
+Firmware and electrical values were not changed in this redraw, so firmware builds and runtime tests were not repeated. Existing revision 3.1 results above still describe the software. No hardware validation or verification of the exact Robu carrier pin order/regulator circuit is claimed.
