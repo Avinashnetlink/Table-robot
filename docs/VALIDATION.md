@@ -47,3 +47,11 @@ Replaced the block-style overview and separate summary sheets with one complete 
 The generator verified **210 component terminals**, **49 named nets** and **31 unjoined wire crossings**. It rejects wrong-net wires at terminals, unconnected terminals, touching/overlapping different-net wire segments, and wires passing through module or passive-symbol bodies. Seventeen critical sensor, motor, audio and battery nets were also checked against the project pin assignments; local Markdown links and the whitespace check passed. Full-resolution output is 5760 × 4480 PNG plus editable SVG; all views were visually inspected. The generated terminal netlist is in `docs/circuit-netlist.json`.
 
 Firmware and electrical values were not changed in this redraw, so firmware builds and runtime tests were not repeated. Existing revision 3.1 results above still describe the software. No hardware validation or verification of the exact Robu carrier pin order/regulator circuit is claimed.
+
+## Component test circuits and folder map — 18 October 2026
+
+Added local `circuit.png` and `circuit.svg` to all 13 T01–T13 hardware test folders, with shorter parts/steps/pass instructions. Twelve diagrams show individual fixtures; T09 copies the full master because it uses production firmware. Camera/microphone diagrams distinguish existing board traces; Wi-Fi shows the wireless link. Added hardware-test, software-test and tools indexes and a repository folder map.
+
+Validation: generated all diagrams, visually inspected the 12 individual layouts, decoded all 13 PNGs, parsed all 13 SVGs, confirmed T09 exactly matches the master, and verified the 12 standalone sketches plus the intentional T09 procedure. All 186 local Markdown links checked across 25 guides resolve; generator Python syntax and Git whitespace checks passed.
+
+No functional firmware change was made; T01's printed inventory-document path was corrected. Firmware compilation and runtime suites were not repeated for these documentation/artifact changes. No hardware was connected or tested; the physical commissioning checklist remains pending.

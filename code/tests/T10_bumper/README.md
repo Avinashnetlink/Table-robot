@@ -1,46 +1,16 @@
-[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+# T10 — Both bumper switches
 
-# T10 — Bumper
+[All hardware tests](../README.md) · [Full robot circuit](../../../docs/CIRCUIT.md)
 
-> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+![T10 — Both bumper switches circuit](circuit.png)
 
-Prints every bumper press and release on D1.
+[Full-size PNG](circuit.png) · [Zoomable SVG](circuit.svg)
 
-## Wiring
+**Parts:** XIAO, two microswitches, R14 10 kΩ, C14 100 nF, USB cable. Use each switch's **NO** and **COM** contacts in parallel; leave NC unused. Set `BUMPER_NC_SERIES=false` for this diagram.
 
-```
-3V3 ---- R14 10 kΩ ----+---- XIAO D1
-                       +---- C14 100 nF ---- GND
-                       +---- switch 1: NO, COM ---- GND
-                       +---- switch 2: NO, COM ---- GND
-```
+1. Upload `T10_bumper.ino`; open Serial Monitor at 115200.
+2. Press and release the left switch, then the right; test each independently.
 
-Use the **NO** (normally open) tab and **COM** on each microswitch. Both switches in parallel.
+**Pass:** idle reads HIGH; every press produces one `PRESSED` and every release returns to idle. This diagnostic reports events; full-robot motor stopping is checked during commissioning.
 
-## Steps
-
-1. Upload, open Serial Monitor at 115200.
-2. Press the left switch, release. Press the right switch, release.
-
-## Expected output
-
-```
-Idle = high, OK. Press the left switch, then the right switch.
-PRESSED  (#1) -> Bob would stop
-released
-PRESSED  (#2) -> Bob would stop
-released
-PASS if both switches each printed one press.
-```
-
-## Pass
-
-Each press prints exactly one `PRESSED`, and idle reads high.
-
-## If it fails
-
-| Symptom | Fix |
-| --- | --- |
-| `D1 is low with nothing pressed` | A switch is on NC instead of NO, or R14 missing. |
-| Several presses for one push | C14 missing. |
-| One switch does nothing | Its COM is not on GND, or it is on NC. |
+If idle is LOW, check NO/NC selection and R14. For repeated events, inspect the switch, connections and C14. If you deliberately choose NC series wiring, change both this sketch and main firmware polarity and follow the alternative in [hardware](../../../docs/HARDWARE.md).

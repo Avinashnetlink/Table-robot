@@ -1,48 +1,20 @@
-[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+# T11 — Amplifier and speaker
 
-# T11 — Speaker
+[All hardware tests](../README.md) · [Full robot circuit](../../../docs/CIRCUIT.md)
 
-> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+![T11 — Amplifier and speaker circuit](circuit.png)
 
-Turns on the MAX98357A through the Q1 safe switch, plays a quiet tone and a chime over I2S, then turns the amp off.
+[Full-size PNG](circuit.png) · [Zoomable SVG](circuit.svg)
 
-## Wiring
+**Parts:** XIAO, PCF8574, MAX98357A, Q1 BC547, R15/R16/R22 100 kΩ, R17 22 kΩ, C5 100 µF, C6 100 nF, 4 Ω speaker, protected 1S cell, F1, SW1 and USB cable. T07 must pass first.
 
-| Amp pin | Connect to |
-| --- | --- |
-| VIN | Switched battery, with C5 100 µF + C6 100 nF to GND |
-| GND | GND |
-| BCLK | D6 |
-| LRC | D7 |
-| DIN | D10 |
-| SD | Q1 collector (safe switch, PCF P1) |
-| GAIN | R22 100 kΩ to VIN (3 dB, quietest) |
-| OUT+ / OUT− | Speaker. **Never** connect a speaker wire to GND. |
+The diagram includes the entire amp enable circuit. USB powers the XIAO; the battery powers the amp. Join grounds; BAT+ can remain disconnected. BCLK → D6, LRC → D7, DIN → D10. Isolate the Sense SD pull-up affecting D10 and remove conflicting amplifier SD/GAIN straps per [hardware](../../../docs/HARDWARE.md). Connect the speaker only between OUT+ and OUT−; neither lead goes to GND.
 
-## Keys
+1. Wire with power off, checking Q1 pinout and C5 polarity. Keep motor power isolated if testing on the assembled robot.
+2. Upload `T11_speaker.ino`, open Serial Monitor at 115200, then power the amplifier. A quiet tone is attempted at startup.
+3. Press `t` for a one-second 440 Hz tone and `c` for a chime. `+` / `-` adjust volume; start at 10% and stay within the speaker's power rating.
+4. Measure SD during playback and idle, supply current and temperature during repeated sounds.
 
-| Key | Action |
-| --- | --- |
-| `t` | 440 Hz tone, 1 s |
-| `c` | Three-note chime |
-| `+` / `-` | Volume up / down (starts at 10%) |
+**Pass:** clear tone/chime, shutdown between sounds, no persistent buzz, resets or excessive heating. Check measured temperature against the fitted parts' limits; do not use touching the powered chip as the test.
 
-## Steps
-
-1. Power switch on (the amp runs from the battery). Upload, open Serial Monitor at 115200.
-2. A tone plays at start. Press `t` and `c`. Raise the volume with `+` until it is clear at desk distance.
-3. Touch the amp chip after a minute of tones: warm is fine, hot is not.
-
-## Pass
-
-Clear tone and chime, no buzz between sounds, the amp stays cool.
-
-## If it fails
-
-| Symptom | Fix |
-| --- | --- |
-| Silent | SD not high while playing (run T07 key `2`), VIN not powered, or BCLK/LRC swapped. |
-| Quiet and distorted | Battery low; charge it. |
-| Too loud even at 10% | GAIN is not going through R22: tied straight to GND is 12 dB, left floating is 9 dB. |
-| Click at every reset | Normal only if the amp is on during reset; firmware keeps it off. |
-| Hum or buzz | Speaker wires near motor wires; twist the speaker pair. |
+If silent, check battery, SD enable voltage and I²S pins. If distorted, lower volume and check supply sag. Complete firmware speech and reset behavior still require the full-robot tests.

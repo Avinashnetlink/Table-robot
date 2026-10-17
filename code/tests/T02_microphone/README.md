@@ -1,36 +1,16 @@
-[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
-
 # T02 — Built-in microphone
 
-> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+[All hardware tests](../README.md) · [Full robot circuit](../../../docs/CIRCUIT.md)
 
-Reads the Sense board's PDM microphone (clock GPIO42, data GPIO41) and prints the sound level 20 times a second.
+![T02 — Built-in microphone circuit](circuit.png)
 
-## Wiring
+[Full-size PNG](circuit.png) · [Zoomable SVG](circuit.svg)
 
-Nothing extra. Do **not** cut the microphone jumpers on the Sense board.
+**Parts:** XIAO ESP32-S3 Sense, USB cable. Keep the microphone jumpers intact; GPIO42 is clock and GPIO41 is data. No external microphone or amplifier.
 
-## Steps
+1. Upload `T02_microphone.ino` using the [common settings](../README.md).
+2. Open Serial Plotter at 115200. Record a quiet baseline, speak, then clap about 30 cm away.
 
-1. Upload, then open **Tools > Serial Plotter** at 115200.
-2. Stay quiet for a few seconds, then clap about 30 cm from the board.
+**Pass:** speech/claps produce repeatable peaks clearly above the quiet level, without persistent clipping or silence. A clap around ten times the quiet level is a useful initial check, not a calibrated acoustic measurement.
 
-## Expected output
-
-The `level` line sits low (often 20–200) when quiet and jumps far higher on a clap. Every 5 s it prints:
-
-```
-# loudest peak in the last 5 s: 18542 (PASS, the mic hears you)
-```
-
-## Pass
-
-A clap gives a clear spike, at least 10 times the quiet level.
-
-## If it fails
-
-| Symptom | Fix |
-| --- | --- |
-| `microphone did not start` | This is not the Sense board, or the expansion board is not pressed fully onto the XIAO. |
-| Flat line at 0 | The microphone jumpers were cut: bridge them with solder again. |
-| Very noisy when quiet | Move away from a fan or a charger. Motor noise is tested later. |
+For a flat trace, power off and check the Sense connector and microphone jumpers. Repeat later with the motors and speaker operating during full-robot commissioning.

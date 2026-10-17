@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1044pt" height="576pt" viewBox="0 0 1044 576" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 576
+L 1044 576
+L 1044 0
+L 0 0
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="line2d_1">
+    <path d="M 133.2 144
+L 133.2 122.4
+" clip-path="url(#p26204e3d92)" style="fill: none; stroke: #df7900; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 133.2 388.8
+L 133.2 410.4
+" clip-path="url(#p26204e3d92)" style="fill: none; stroke: #606870; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 302.4 280.8
+L 525.6 280.8
+L 525.6 280.8
+L 550.8 280.8
+" clip-path="url(#p26204e3d92)" style="fill: none; stroke: #df7900; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_4">
+    <path d="M 612 280.8
+L 648 280.8
+" clip-path="url(#p26204e3d92)" style="fill: none; stroke: #df7900; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="patch_2">
+    <path d="M 64.8 144
+L 302.4 144
+L 302.4 388.8
+L 64.8 388.8
+z
+" clip-path="url(#p26204e3d92)" style="fill: #e9f2ff; stroke: #243342; stroke-width: 1.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 648 248.4
+L 806.4 248.4
+L 806.4 313.2
+L 648 313.2
+z
+" clip-path="url(#p26204e3d92)" style="fill: #faead3; stroke: #df7900; stroke-width: 1.5; stroke-linejoin: miter"/>
+   </g>
+   <g id="line2d_5">
+    <path d="M 122.4 410.4
+L 144 410.4
+" clip-path="url(#p26204e3d92)" style="fill: none; stroke: #606870; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_6">
+    <path d="M 126 415.44
+L 140.4 415.44
+" clip-path="url(#p26204e3d92)" style="fill: none; stroke: #606870; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_7">
+    <path d="M 129.96 420.48
+L 136.44 420.48
+" clip-path="url(#p26204e3d92)" style="fill: none; stroke: #606870; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_8">
+    <path d="M 550.8 280.8
+L 563.04 280.8
+L 569.16 285.12
+L 575.28 276.48
+L 581.4 285.12
+L 587.52 276.48
+L 593.64 285.12
+L 599.76 280.8
+L 612 280.8
+" clip-path="url(#p26204e3d92)" style="fill: none; stroke: #606870; stroke-width: 1.7; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 22px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="522" y="30.915703" transform="rotate(-0 522 30.915703)">T05 — Touch-pad calibration</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="522" y="58.297852" transform="rotate(-0 522 58.297852)">USB power. R13 is in series, close to D0. No external touch-controller module.</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="522" y="560.598047" transform="rotate(-0 522 560.598047)">Same named power/ground = same wire. Dot = joined. Bridge = crossing only. Pin names, not physical header order.</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="183.6" y="169.236719" transform="rotate(-0 183.6 169.236719)">XIAO ESP32-S3 Sense</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="295.2" y="283.397656" transform="rotate(-0 295.2 283.397656)">D0 / GPIO1</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="126" y="137.237656" transform="rotate(-0 126 137.237656)">3V3</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="133.2" y="382.037656" transform="rotate(-0 133.2 382.037656)">GND</text>
+   </g>
+   <g id="text_8">
+    <g id="patch_4">
+     <path d="M 121.289922 122.46
+L 145.110078 122.46
+Q 146.870078 122.46 146.870078 120.7
+L 146.870078 109.7
+Q 146.870078 107.94 145.110078 107.94
+L 121.289922 107.94
+Q 119.529922 107.94 119.529922 109.7
+L 119.529922 120.7
+Q 119.529922 122.46 121.289922 122.46
+z
+" style="fill: #df7900; stroke: #df7900; stroke-linejoin: miter"/>
+    </g>
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="133.2" y="118.057422" transform="rotate(-0 133.2 118.057422)">3V3</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; fill: #243342" transform="translate(135.801562 194.256348)">USB-C data cable</text>
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; fill: #243342" transform="translate(127.852344 207.459355)">Serial: 115200 baud</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #243342" transform="translate(571.563281 258.67668)">R13</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #243342" transform="translate(568.035156 270.678633)">470Ω</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; fill: #243342" transform="translate(663.646875 276.716484)">Insulated copper pad</text>
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; fill: #243342" transform="translate(689.492812 291.118828)">20 × 30 mm</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="547.2" y="471.117656" transform="rotate(-0 547.2 471.117656)">Foil must not touch GND, the antenna or exposed metal. Repeat calibration after mounting.</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p26204e3d92">
+   <rect x="0" y="0" width="1044" height="576"/>
+  </clipPath>
+ </defs>
+</svg>

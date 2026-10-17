@@ -1,42 +1,18 @@
-[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
-
 # T01 — Camera
 
-> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+[All hardware tests](../README.md) · [Full robot circuit](../../../docs/CIRCUIT.md)
 
-Checks that PSRAM is on, reads the camera's name, and takes five photos. With Wi-Fi details filled in, it also shows the photo in a browser.
+![T01 — Camera circuit](circuit.png)
 
-## Wiring
+[Full-size PNG](circuit.png) · [Zoomable SVG](circuit.svg)
 
-Nothing extra. The camera is on the Sense board's ribbon connector. Fit the antenna.
+**Parts:** XIAO ESP32-S3 Sense with fitted camera, antenna and USB data cable. No external sensor wiring. Dashed connections in the diagram are existing board traces.
 
-## Steps
+1. Follow the [common upload settings](../README.md). Enable OPI PSRAM.
+2. Optionally copy `secrets.example.h` to `secrets.h` and enter 2.4 GHz Wi-Fi details for browser viewing. Leave Wi-Fi empty for Serial-only captures.
+3. Upload `T01_camera.ino`; open Serial Monitor at 115200.
+4. With Wi-Fi configured, open the printed HTTP address and refresh to view a photo.
 
-1. Optional: copy `secrets.example.h` to `secrets.h` and type your Wi-Fi name and password there (2.4 GHz only). Leave both empty to skip Wi-Fi. `secrets.h` stays on this computer.
-2. Tools: **XIAO_ESP32S3**, **PSRAM: OPI PSRAM**, **USB CDC On Boot: Enabled**. Upload.
-3. Open Serial Monitor at 115200.
-4. With Wi-Fi: open the printed address, for example `http://192.168.1.77/`, and refresh for new photos.
+**Pass:** PSRAM found, camera PID/name printed, five nonempty JPEG captures and a recognizable browser image when Wi-Fi is enabled. Record the camera variant in the [inventory](../../../docs/INVENTORY.md). Image byte count depends on the scene.
 
-## Expected output
-
-```
-PSRAM: found, 8388608 bytes
-Camera sensor PID 0x3660 = OV3660
-Photo 1: 640x480, 21544 bytes JPEG
-...
-```
-
-## Pass
-
-- PSRAM found.
-- A camera name is printed. **Write it in `BOB.md` Phase 1.**
-- Five photos with a size above about 5,000 bytes. The browser photo is sharp at about 20–40 cm.
-
-## If it fails
-
-| Message | Fix |
-| --- | --- |
-| `PSRAM: MISSING` | Tools > PSRAM > OPI PSRAM, upload again. |
-| `esp_camera_init error 0x105` or `0x20001` | Ribbon not seated: open the latch, push the ribbon fully in, close it. |
-| Photo very dark or green | Normal for the first frame; refresh. Peel the lens film off. |
-| Wi-Fi does not connect | The network must be 2.4 GHz. Antenna fitted. |
+If initialization fails, disconnect power and reseat the ribbon and Sense board. Missing PSRAM usually means the board settings are wrong.

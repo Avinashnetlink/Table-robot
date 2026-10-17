@@ -1,5 +1,7 @@
 # Verification and commissioning
 
+For individual component circuits and upload steps, start at the [hardware test index](../code/tests/README.md). This document is the complete assembled-robot acceptance procedure; the root [tests/ folder](../tests/README.md) contains laptop-only software checks.
+
 ## Automated checks (no robot connected)
 
 ```sh

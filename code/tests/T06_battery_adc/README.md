@@ -1,51 +1,18 @@
-[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+# T06 — Battery voltage and ADC
 
-# T06 — Battery voltage
+[All hardware tests](../README.md) · [Full robot circuit](../../../docs/CIRCUIT.md)
 
-> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+![T06 — Battery voltage and ADC circuit](circuit.png)
 
-Reads the cell voltage through the R1/R2 divider on ADS1115 A3, compares it with your multimeter, and prints a calibration number.
+[Full-size PNG](circuit.png) · [Zoomable SVG](circuit.svg)
 
-## Wiring
+**Parts:** XIAO, ADS1115, R1/R2 100 kΩ each, C9 100 nF, protected 1S cell, holder, fuse F1, switch SW1, USB cable and voltmeter. Select fuse and wiring ratings from the [power checklist](../../../docs/INVENTORY.md).
 
-```
-VBAT (after the switch) ---- R1 100 kΩ ----+---- R2 100 kΩ ---- GND
-                                           +---- C9 100 nF ---- GND
-                                           +---- ADS1115 A3
-ADS1115: VDD 3V3, GND, ADDR GND, SDA D4, SCL D5
-```
+1. With power removed, wire the diagram. Verify **BAT+ / BAT− markings** and battery polarity with a meter before connecting. Do not infer pad polarity from board orientation.
+2. Turn SW1 on, upload `T06_battery_adc.ino`, open Serial Monitor at 115200. ADS1115 ADDR is GND (`0x48`); A3 is the divider midpoint.
+3. Measure switched VBAT with a voltmeter at the same time as the ADC reading. A3 should be approximately half VBAT. USB can charge the connected cell.
+4. Enter the meter voltage, e.g. `3.98`. Copy the valid `BATTERY_CAL` result into `code/bob/config.h`.
 
-Check battery polarity at the XIAO pads with the meter **before** soldering: negative is the pad nearer the USB socket.
+**Pass:** readings agree within 50 mV after calibration, with no timeout/invalid readings. Recheck near 4.2, 3.7 and 3.4 V during normal discharge.
 
-## Library
-
-No external ADC library; checked register access.
-
-## Steps
-
-1. Power switch on. Upload, open Serial Monitor at 115200.
-2. Measure the cell (after the switch) with the meter.
-3. Type the meter value, for example `3.98`, and press Enter.
-4. Copy the printed `BATTERY_CAL` line into `code/bob/config.h`.
-
-## Expected output
-
-```
-cell 3.962 V  [OK]
-Meter 3.980 V, ADC 3.962 V -> error -18 mV
-  constexpr float BATTERY_CAL = 1.0045;
-PASS - within 50 mV
-```
-
-## Pass
-
-Within 50 mV of the meter, or corrected by `BATTERY_CAL`. Repeat at a lower charge if you can: the error should stay small from 4.2 V down to 3.4 V.
-
-## If it fails
-
-| Symptom | Fix |
-| --- | --- |
-| `no ADS1115 at 0x48` | Run T03. ADDR must go to GND. |
-| Cell reads ~0 V | Switch off, or the divider is not on A3. |
-| Cell reads double or half | R1 or R2 is the wrong value; both must be 100 kΩ. |
-| Error above 100 mV | Check C9 is 100 nF (not 100 µF) and the ADS1115 ground goes to the same GND as the battery. |
+For zero or doubled readings, check A3, the two resistor values and common ground. Do not connect raw VBAT directly to an ADC input or XIAO GPIO.

@@ -1,6 +1,16 @@
-# T09 — ToF edge calibration using the actual firmware
+# T09 — Three VL53L0X edge sensors
 
-The obsolete analog calibration sketch has been removed. Use the complete firmware with `CALIBRATION_CONFIRMED=false`; this exercises the same mux, drivers and status checks used during motion. No separate copy of the sensor driver is maintained.
+[All hardware tests](../README.md) · [Full robot circuit](../../../docs/CIRCUIT.md)
+
+![T09 — Three VL53L0X edge sensors circuit](circuit.png)
+
+[Full-size PNG](circuit.png) · [Zoomable SVG](circuit.svg)
+
+**Parts:** the full robot assembly shown above, including three downward VL53L0X modules and TCA9548A. This folder deliberately has no standalone `.ino`: upload `code/bob/bob.ino` using [setup](../../README.md). The local diagram is a copy of the full circuit because this test exercises production sensor and safety code. Keep SW2 open and motion calibration unconfirmed.
+
+Run the following laptop commands from the repository root; install `tools/requirements.txt` for serial capture.
+
+Use `CALIBRATION_CONFIRMED=false` throughout capture. This exercises the same mux, drivers and status checks used during motion.
 
 1. Fit three Robu VL53L0X modules and the TCA9548A as shown in [hardware](../../../docs/HARDWARE.md). Use the default build or explicitly `--edge-sensor vl53l0x`. Keep SW2 open.
 2. Flash using [setup](../../README.md). Confirm `edge_sensor`, three `edge_mm` readings, `edge_valid` and `edge_status` in Serial `status` JSON. Move one target at a time to verify left/right/center channel order.

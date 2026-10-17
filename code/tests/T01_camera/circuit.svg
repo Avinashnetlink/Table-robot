@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1080pt" height="648pt" viewBox="0 0 1080 648" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 648
+L 1080 648
+L 1080 0
+L 0 0
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="line2d_1">
+    <path d="M 154.8 129.6
+L 154.8 108
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke: #df7900; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 154.8 532.8
+L 154.8 554.4
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke: #606870; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 324 237.6
+L 468 237.6
+L 468 237.6
+L 633.6 237.6
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke-dasharray: 6.66,2.88; stroke-dashoffset: 0; stroke: #137cb2; stroke-width: 1.8"/>
+   </g>
+   <g id="line2d_4">
+    <path d="M 324 277.2
+L 482.4 277.2
+L 482.4 277.2
+L 633.6 277.2
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke-dasharray: 6.66,2.88; stroke-dashoffset: 0; stroke: #137cb2; stroke-width: 1.8"/>
+   </g>
+   <g id="line2d_5">
+    <path d="M 324 316.8
+L 496.8 316.8
+L 496.8 316.8
+L 633.6 316.8
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke-dasharray: 6.66,2.88; stroke-dashoffset: 0; stroke: #137cb2; stroke-width: 1.8"/>
+   </g>
+   <g id="line2d_6">
+    <path d="M 324 356.4
+L 511.2 356.4
+L 511.2 356.4
+L 633.6 356.4
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke-dasharray: 6.66,2.88; stroke-dashoffset: 0; stroke: #137cb2; stroke-width: 1.8"/>
+   </g>
+   <g id="line2d_7">
+    <path d="M 324 396
+L 525.6 396
+L 525.6 396
+L 633.6 396
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke-dasharray: 6.66,2.88; stroke-dashoffset: 0; stroke: #137cb2; stroke-width: 1.8"/>
+   </g>
+   <g id="line2d_8">
+    <path d="M 324 435.6
+L 540 435.6
+L 540 435.6
+L 633.6 435.6
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke-dasharray: 6.66,2.88; stroke-dashoffset: 0; stroke: #137cb2; stroke-width: 1.8"/>
+   </g>
+   <g id="patch_2">
+    <path d="M 86.4 129.6
+L 324 129.6
+L 324 532.8
+L 86.4 532.8
+z
+" clip-path="url(#p19847f5b3d)" style="fill: #e9f2ff; stroke: #243342; stroke-width: 1.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 633.6 180
+L 950.4 180
+L 950.4 496.8
+L 633.6 496.8
+z
+" clip-path="url(#p19847f5b3d)" style="fill: #f2f7ed; stroke: #243342; stroke-width: 1.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="line2d_9">
+    <path d="M 144 554.4
+L 165.6 554.4
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke: #606870; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_10">
+    <path d="M 147.6 559.44
+L 162 559.44
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke: #606870; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_11">
+    <path d="M 151.56 564.48
+L 158.04 564.48
+" clip-path="url(#p19847f5b3d)" style="fill: none; stroke: #606870; stroke-width: 1.8; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 22px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="540" y="30.914844" transform="rotate(-0 540 30.914844)">T01 — Camera</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="540" y="58.297852" transform="rotate(-0 540 58.297852)">USB powers the XIAO. Dashed lines are existing Sense-board traces: do not add jumper wires.</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="540" y="632.598047" transform="rotate(-0 540 632.598047)">Same named power/ground = same wire. Dot = joined. Bridge = crossing only. Pin names, not physical header order.</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="205.2" y="154.836719" transform="rotate(-0 205.2 154.836719)">XIAO ESP32-S3 Sense</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="316.8" y="240.197656" transform="rotate(-0 316.8 240.197656)">GPIO10</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="316.8" y="279.797656" transform="rotate(-0 316.8 279.797656)">GPIO13</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="316.8" y="319.397656" transform="rotate(-0 316.8 319.397656)">GPIO38</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="316.8" y="358.997656" transform="rotate(-0 316.8 358.997656)">GPIO47</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="316.8" y="398.597656" transform="rotate(-0 316.8 398.597656)">GPIO40</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="316.8" y="438.197656" transform="rotate(-0 316.8 438.197656)">GPIO39</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #243342" x="147.6" y="122.837656" transform="rotate(-0 147.6 122.837656)">3V3</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="154.8" y="526.037656" transform="rotate(-0 154.8 526.037656)">GND</text>
+   </g>
+   <g id="text_13">
+    <g id="patch_4">
+     <path d="M 142.889922 108.06
+L 166.710078 108.06
+Q 168.470078 108.06 168.470078 106.3
+L 168.470078 95.3
+Q 168.470078 93.54 166.710078 93.54
+L 142.889922 93.54
+Q 141.129922 93.54 141.129922 95.3
+L 141.129922 106.3
+Q 141.129922 108.06 142.889922 108.06
+z
+" style="fill: #df7900; stroke: #df7900; stroke-linejoin: miter"/>
+    </g>
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="154.8" y="103.657422" transform="rotate(-0 154.8 103.657422)">3V3</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; fill: #243342" transform="translate(157.401562 179.856348)">USB-C data cable</text>
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; fill: #243342" transform="translate(149.452344 193.059355)">Serial: 115200 baud</text>
+   </g>
+   <g id="text_15">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="792" y="205.236719" transform="rotate(-0 792 205.236719)">Sense camera connector</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #243342" x="640.8" y="240.197656" transform="rotate(-0 640.8 240.197656)">XCLK</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #243342" x="640.8" y="279.797656" transform="rotate(-0 640.8 279.797656)">PCLK</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #243342" x="640.8" y="319.397656" transform="rotate(-0 640.8 319.397656)">VSYNC</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #243342" x="640.8" y="358.997656" transform="rotate(-0 640.8 358.997656)">HREF</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #243342" x="640.8" y="398.597656" transform="rotate(-0 640.8 398.597656)">SCCB SDA</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #243342" x="640.8" y="438.197656" transform="rotate(-0 640.8 438.197656)">SCCB SCL</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="576" y="550.317656" transform="rotate(-0 576 550.317656)">Camera D0–D7 (onboard): GPIO15,17,18,16,14,12,11,48. Fit the camera ribbon + antenna.</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #243342" x="576" y="584.877656" transform="rotate(-0 576 584.877656)">No battery or motor circuit is required for this individual test.</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p19847f5b3d">
+   <rect x="0" y="0" width="1080" height="648"/>
+  </clipPath>
+ </defs>
+</svg>

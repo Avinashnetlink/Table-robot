@@ -1,5 +1,7 @@
 # Build and setup
 
+For individual component wiring and upload steps, open the [hardware test index](tests/README.md); each test contains its own PNG/SVG circuit. The [folder map](../README.md) explains robot, laptop and helper code.
+
 Use [the inventory checklist](../docs/INVENTORY.md) before ordering or connecting parts. Complete [hardware acceptance](../docs/TESTING.md) before enabling motors. Default firmware remains motion-locked.
 
 ## Reproducible command-line build

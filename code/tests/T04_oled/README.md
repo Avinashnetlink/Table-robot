@@ -1,38 +1,16 @@
-[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+# T04 — OLED display
 
-# T04 — OLED screen
+[All hardware tests](../README.md) · [Full robot circuit](../../../docs/CIRCUIT.md)
 
-> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+![T04 — OLED display circuit](circuit.png)
 
-Shows "Bob", two eyes that blink, and a counter.
+[Full-size PNG](circuit.png) · [Zoomable SVG](circuit.svg)
 
-## Wiring
+**Parts:** XIAO, SSD1306 I²C OLED, USB cable; R23/R24 only if suitable bus pull-ups are absent. VCC → 3V3, GND → GND, SDA → D4, SCL → D5.
 
-| OLED pin | XIAO |
-| --- | --- |
-| VCC | 3V3 |
-| GND | GND |
-| SCL | D5 |
-| SDA | D4 |
+1. Install the pinned Adafruit SSD1306/GFX libraries through the [setup instructions](../../README.md).
+2. Upload `T04_oled.ino` and open Serial Monitor at 115200.
 
-Power it from 3.3 V only.
+**Pass:** display detected, “Bob” and blinking eyes visible, counter increases. The project uses address `0x3C`; this diagnostic can also detect `0x3D`.
 
-## Libraries
-
-Adafruit SSD1306 and Adafruit GFX Library.
-
-## Steps
-
-Upload, open Serial Monitor at 115200, watch the screen.
-
-## Pass
-
-`OLED found at 0x3C` is printed, the screen shows **Bob**, the eyes blink every few seconds, and the counter climbs.
-
-## If it fails
-
-| Symptom | Fix |
-| --- | --- |
-| `no OLED at 0x3C or 0x3D` | Run T03. Check the four wires. |
-| Screen found but blank | Some modules are SH1106, not SSD1306: they show garbage or nothing. Buy the SSD1306 module from the product list. |
-| Text shifted 2 pixels | Same: an SH1106 module. |
+If absent, run T03 and check the four wires. If detected but blank/garbled, verify that the controller is SSD1306 rather than SH1106.

@@ -6,16 +6,27 @@ Revision 3.1 uses **three downward-facing Robu VL53L0X modules through one TCA95
 
 [Open the full-size PNG](images/bob-wiring.png) · [Zoomable SVG](images/bob-wiring.svg) · [Individual component connections](docs/CIRCUIT.md)
 
-| Document | Purpose |
+## Folder map
+
+| Folder | Runs on / use |
 | --- | --- |
-| [Have / Order / Tested checklist](docs/INVENTORY.md) | Required parts, quantities and measurements |
-| [Circuit and pin table](docs/HARDWARE.md) | Selected VL53L0X wiring, power and GPIO mapping |
-| [Full pin-to-pin schematic and connection list](docs/CIRCUIT.md) | All module pins, motor/audio enables, resistors and capacitors |
-| [Build and setup](code/README.md) | Select the sensor family, configure credentials and upload |
-| [Tests and calibration](docs/TESTING.md) | Automated checks and staged physical commissioning |
-| [Architecture](docs/ARCHITECTURE.md) | Modules, safety policy and protocol |
-| [Review and limitations](docs/AUDIT.md) | Changes made and unresolved hardware limits |
-| [Validation](docs/VALIDATION.md) | Recorded software checks |
+| [`code/bob/`](code/bob/README.md) | **Robot:** main firmware uploaded to the XIAO |
+| [`code/laptop/`](code/laptop/README.md) | **Laptop:** server, speech, commands and reminders |
+| [`code/tests/`](code/tests/README.md) | **Real hardware tests:** T01–T13 instructions and local PNG/SVG circuits; upload one diagnostic at a time |
+| [`tests/`](tests/README.md) | **Laptop software tests:** simulated firmware and server integration; no physical robot required |
+| [`tools/`](tools/README.md) | **Laptop helpers:** build, run tests, capture readings, calibrate and generate drawings |
+| [`images/`](docs/CIRCUIT.md) | **Complete robot circuit:** master PNG/SVG and enlarged detail sheets |
+| [`docs/`](docs/TESTING.md) | **Reference and acceptance:** parts, wiring, full-robot testing, architecture and validation |
+| `build/` | Generated firmware and captured test logs; created by tools, ignored by Git |
+| `.github/` | Automated CI configuration for software checks and compilation |
+
+**Build/test order:** [Have / Order checklist](docs/INVENTORY.md) → [individual parts and circuits](code/tests/README.md) → [main firmware + laptop setup](code/README.md) → [complete robot acceptance](docs/TESTING.md).
+
+`code/tests/` covers individual component diagnostics. The root `tests/` covers automated software checks. **The complete physical robot test procedure is `docs/TESTING.md`.**
+
+Detailed references: [pins and power](docs/HARDWARE.md), [all circuit connections](docs/CIRCUIT.md), [architecture](docs/ARCHITECTURE.md), [review/limitations](docs/AUDIT.md), [recorded validation](docs/VALIDATION.md).
+
+## Build and check software
 
 ```sh
 python3 -m venv .venv

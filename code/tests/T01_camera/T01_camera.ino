@@ -114,7 +114,7 @@ void setup() {
 
   sensor_t *s = esp_camera_sensor_get();
   Serial.printf("Camera sensor PID 0x%04x = %s\n", s->id.PID, sensorName(s->id.PID));
-  Serial.println("Write this camera name in BOB.md (Phase 1).");
+  Serial.println("Record this camera name in docs/INVENTORY.md.");
 
   for (int i = 1; i <= 5; i++) {
     camera_fb_t *fb = esp_camera_fb_get();

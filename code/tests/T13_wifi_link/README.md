@@ -1,50 +1,26 @@
-[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
-
 # T13 — Wi-Fi and laptop link
 
-> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+[All hardware tests](../README.md) · [Full robot circuit](../../../docs/CIRCUIT.md)
 
-Connects to Wi-Fi, opens the WebSocket to the laptop server, sends a status every 2 seconds, and prints what the laptop sends back.
+![T13 — Wi-Fi and laptop link circuit](circuit.png)
 
-## Before you start
+[Full-size PNG](circuit.png) · [Zoomable SVG](circuit.svg)
 
-1. Start the laptop server (see [`../../laptop/README.md`](../../laptop/README.md)):
-   ```
-   python code\laptop\server.py --no-stt
-   ```
-2. Find the laptop's IP: run `ipconfig` on the laptop, use the **IPv4 Address** of the Wi-Fi adapter.
-3. Copy `secrets.example.h` to `secrets.h`, then put your Wi-Fi name, password and the laptop IP in `secrets.h`. That file stays on this computer.
+**Parts:** XIAO Sense, antenna, USB cable, laptop and a shared 2.4 GHz LAN. The dashed network path is wireless; no jumper wire or external sensor is needed.
 
-## Libraries
+1. Install the laptop dependencies using [setup](../../README.md). From the repository root, activate your Python environment and start:
 
-WebSockets (Markus Sattler), ArduinoJson.
-
-## Steps
-
-1. Upload, open Serial Monitor at 115200.
-2. On the laptop, the server prints `Bob connected, firmware T13`.
-3. In the laptop server window type: `show Hello|from laptop`
-
-## Expected (Bob's Serial Monitor)
-
-```
-Wi-Fi OK, Bob's IP 192.168.1.77, signal -58 dBm
-WebSocket connected. PASS step 1.
-From laptop: {"type":"show","line1":"Hello!","line2":"laptop connected","ms":3000}
-From laptop: {"type":"show","line1":"Hello","line2":"from laptop"}
-PASS step 2: a laptop message arrived.
+```sh
+export BOB_TOKEN='your-generated-shared-token'
+python code/laptop/server.py --host YOUR_LAN_IP --no-stt
 ```
 
-## Pass
+On PowerShell use `$env:BOB_TOKEN='your-generated-shared-token'`. Replace `YOUR_LAN_IP` with the laptop's Wi-Fi IPv4 address; `localhost` cannot be reached by the robot.
 
-Both PASS lines appear. The signal is better than about −75 dBm where Bob will drive.
+2. Copy this folder's `secrets.example.h` to `secrets.h`. Set Wi-Fi, laptop IP and the same `BOB_TOKEN`. Keep that file private.
+3. Upload `T13_wifi_link.ino`, open Serial Monitor at 115200. Wait for `WebSocket connected. PASS step 1.`
+4. In the laptop server console type `show Hello|from laptop`. Look for `PASS step 2: a laptop message arrived.`
 
-## If it fails
+**Pass:** both messages appear and the connection remains stable at the intended desk position. This test checks authenticated transport; it does not display the message on an OLED or arm/move motors.
 
-| Symptom | Fix |
-| --- | --- |
-| Wi-Fi does not connect | 2.4 GHz network only; check the password; antenna fitted. |
-| Wi-Fi OK, WebSocket never connects | Wrong laptop IP; Windows Firewall: allow Python on **private** networks when asked, or run `netsh advfirewall firewall add rule name="Bob" dir=in action=allow protocol=TCP localport=8765` in an admin terminal. |
-| Connects then drops | Laptop on a guest network that isolates devices; use the main network. |
-
-Revision 3 server requires `BOB_TOKEN` in this sketch’s `secrets.h`, matching the laptop environment. Start the server with `--host` set to the laptop LAN IP. T13 proves transport only; it does not arm or move motors.
+If Wi-Fi succeeds but WebSocket fails, check LAN IP, matching token, port 8765 and device isolation. Allow the server only on the intended private network. See [laptop commands](../../laptop/README.md) for full-firmware use.

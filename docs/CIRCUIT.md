@@ -1,5 +1,7 @@
 # Complete pin-to-pin circuit — drawing revision 3.2 / three VL53L0X
 
+For a circuit you can build for just one diagnostic, open the [T01–T13 hardware test index](../code/tests/README.md). Every test folder has local PNG/SVG files. This page describes the complete robot. Regenerate both sets using the [drawing tools](../tools/README.md).
+
 This is the complete **external module wiring** for the selected robot, including every added resistor and capacitor. Camera, microphone, regulators, charging and driver support components already fitted to their respective boards remain on those boards. It is not a bare-IC PCB fabrication schematic. Match module pin labels rather than header positions; Robu's exact carrier schematic and supplied board revision could not be verified from the listing.
 
 **Start with the full schematic below.** It follows the supplied reference layout: continuous signal wires to labelled pins, individual external component symbols, connection dots and bridges for crossings. The electrical design and VL53L0X firmware selection remain revision 3.1; revision 3.2 changes the drawing and its verification.
