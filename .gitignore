@@ -28,3 +28,8 @@ build/
 Thumbs.db
 Desktop.ini
 *.code-workspace
+
+# Optional build variants / bench results
+build-*/
+code/laptop/reminders.db-wal
+code/laptop/reminders.db-shm

@@ -1,8 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T04 — OLED screen
 
-Shows "Bob", two eyes that blink, and a counter.
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
 
-![OLED wiring](02-oled.png)
+Shows "Bob", two eyes that blink, and a counter.
 
 ## Wiring
 

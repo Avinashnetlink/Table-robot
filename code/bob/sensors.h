@@ -1,13 +1,16 @@
 #pragma once
 #include <Arduino.h>
-
 struct EdgeReading {
-  float diff[3];   // LEDs on minus LEDs off, volts: left, right, center
-  bool table[3];   // true = table under that sensor
-  bool ok;         // false = I2C error, saturated, or too much room light
+  uint16_t mm[3];
+  uint8_t status[3]; // native range status; 250=I2C/mux fault, 251=stale/not ready
+  bool valid[3], table[3];
+  bool ok;
+  uint32_t sampleAt; // oldest acquisition start/previous interrupt-clear timestamp
   const char *problem;
 };
-
-bool sensorsBegin();
-bool sensorsReadEdges(EdgeReading &out);  // about 20 ms, turns the LEDs on then off
-bool sensorsReadBattery(float &volts);    // calibrated cell voltage
+bool sensorsBegin(); // battery ADC only
+bool sensorsReadBattery(float &volts);
+bool edgesBegin(); // required three ToF sensors and multiplexer
+bool sensorsReadEdges(EdgeReading &out); // polls without waiting for conversion
+void edgesEnd();
+const char *edgeSensorName();

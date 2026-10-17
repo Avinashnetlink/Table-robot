@@ -13,35 +13,22 @@ Type `help` in this window for console commands.
 from __future__ import annotations
 
 import argparse
-import array
 import asyncio
 import datetime as dt
 import json
-import math
 import os
 import pathlib
 import re
-import sqlite3
 import sys
-import tempfile
 import threading
 import time
-import wave
 
 from websockets.asyncio.server import serve
 
-try:
-    import numpy as np
-    from faster_whisper import WhisperModel
-except ImportError:
-    np = None
-    WhisperModel = None
-
-try:
-    import pytesseract
-    from PIL import Image
-except ImportError:
-    pytesseract = None
+from speech import Segmenter, Transcriber, normalize, synthesize, scale_pcm
+from reminders import Reminders, parse_when
+from protocol import decode_text, validate_outgoing, validate_binary, SESSION, SessionGone
+from transport import RobotLink
 
 HERE = pathlib.Path(__file__).resolve().parent
 PHOTOS = HERE / "photos"
@@ -58,181 +45,6 @@ def log(*parts: object) -> None:
     print(time.strftime("%H:%M:%S"), *parts, flush=True)
 
 
-def normalize(text: str) -> str:
-    return " ".join("".join(c.lower() if c.isalnum() or c.isspace() else " " for c in text).split())
-
-
-# ---------------------------------------------------------------- speech out
-async def synthesize(text: str) -> bytes:
-    """Text to 16 kHz 16-bit mono PCM. Windows built-in voice, or pyttsx3 elsewhere."""
-    with tempfile.TemporaryDirectory() as tmp:
-        path = os.path.join(tmp, "say.wav")
-        env = dict(os.environ, BOB_TEXT=text, BOB_WAV=path)
-        if sys.platform == "win32":
-            script = (
-                "Add-Type -AssemblyName System.Speech;"
-                "$s = New-Object System.Speech.Synthesis.SpeechSynthesizer;"
-                "$f = New-Object System.Speech.AudioFormat.SpeechAudioFormatInfo("
-                "16000, [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen,"
-                " [System.Speech.AudioFormat.AudioChannel]::Mono);"
-                "$s.SetOutputToWaveFile($env:BOB_WAV, $f); $s.Speak($env:BOB_TEXT); $s.Dispose()"
-            )
-            cmd = ["powershell", "-NoProfile", "-NonInteractive", "-Command", script]
-        else:
-            code = (
-                "import os, pyttsx3; e = pyttsx3.init();"
-                "e.save_to_file(os.environ['BOB_TEXT'], os.environ['BOB_WAV']); e.runAndWait()"
-            )
-            cmd = [sys.executable, "-c", code]
-        proc = await asyncio.create_subprocess_exec(*cmd, env=env)
-        await proc.wait()
-        if not os.path.exists(path):
-            raise RuntimeError("text-to-speech produced no audio")
-        return wav_to_pcm16k(path)
-
-
-def wav_to_pcm16k(path: str) -> bytes:
-    with wave.open(path, "rb") as w:
-        rate, channels, width = w.getframerate(), w.getnchannels(), w.getsampwidth()
-        frames = w.readframes(w.getnframes())
-    if width != 2:
-        raise RuntimeError(f"expected 16-bit audio, got {8 * width}-bit")
-    samples = array.array("h", frames)
-    if sys.byteorder == "big":
-        samples.byteswap()
-    if channels > 1:
-        samples = array.array("h", samples[::channels])
-    if rate != RATE:
-        ratio = rate / RATE
-        n = int(len(samples) / ratio)
-        out = array.array("h", bytes(2 * n))
-        for i in range(n):
-            pos = i * ratio
-            j = int(pos)
-            k = min(j + 1, len(samples) - 1)
-            out[i] = int(samples[j] + (samples[k] - samples[j]) * (pos - j))
-        samples = out
-    return samples.tobytes()
-
-
-def scale_pcm(pcm: bytes, volume: float) -> bytes:
-    s = array.array("h", pcm)
-    for i, v in enumerate(s):
-        s[i] = max(-32768, min(32767, int(v * volume)))
-    return s.tobytes()
-
-
-# ---------------------------------------------------------------- speech in
-class Segmenter:
-    """Cuts the microphone stream into utterances with a simple energy detector."""
-
-    def __init__(self) -> None:
-        self.noise = 200.0
-        self.active = False
-        self.buf = bytearray()
-        self.pre = bytearray()
-        self.silent_ms = 0
-
-    def feed(self, pcm: bytes) -> bytes | None:
-        s = array.array("h", pcm)
-        if not s:
-            return None
-        mean = sum(s) / len(s)
-        rms = math.sqrt(sum((v - mean) ** 2 for v in s) / len(s))
-        ms = 1000 * len(s) / RATE
-        loud = rms > max(3 * self.noise, 300)
-        if not loud:
-            self.noise = 0.95 * self.noise + 0.05 * rms
-
-        if not self.active:
-            self.pre += pcm
-            del self.pre[: max(0, len(self.pre) - RATE * 2 // 4)]  # keep 250 ms before speech
-            if loud:
-                self.active, self.silent_ms = True, 0
-                self.buf = bytearray(self.pre)
-            return None
-
-        self.buf += pcm
-        self.silent_ms = 0 if loud else self.silent_ms + ms
-        if self.silent_ms > 700 or len(self.buf) > RATE * 2 * 8:
-            self.active = False
-            out, self.buf = bytes(self.buf), bytearray()
-            return out if len(out) > RATE * 2 * 0.3 else None
-        return None
-
-    @property
-    def speaking(self) -> bool:
-        return self.active
-
-
-class Transcriber:
-    def __init__(self, model_name: str) -> None:
-        self.model = None
-        if WhisperModel is None:
-            log("Speech-to-text off: pip install faster-whisper numpy  (console `hey ...` still works)")
-            return
-        log(f"Loading faster-whisper model '{model_name}' ...")
-        self.model = WhisperModel(model_name, device="cpu", compute_type="int8")
-        log("Speech-to-text ready.")
-
-    def transcribe(self, pcm: bytes) -> str:
-        if self.model is None:
-            return ""
-        audio = np.frombuffer(pcm, dtype=np.int16).astype(np.float32) / 32768.0
-        segments, _ = self.model.transcribe(audio, language="en", beam_size=1)
-        return " ".join(seg.text.strip() for seg in segments).strip()
-
-
-# ---------------------------------------------------------------- reminders
-class Reminders:
-    def __init__(self, path: pathlib.Path) -> None:
-        self.db = sqlite3.connect(path, check_same_thread=False)
-        self.db.execute(
-            "CREATE TABLE IF NOT EXISTS reminders ("
-            " id INTEGER PRIMARY KEY, due TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'task',"
-            " title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0)"
-        )
-        self.db.commit()
-
-    def add(self, due: dt.datetime, title: str, kind: str = "task") -> int:
-        cur = self.db.execute(
-            "INSERT INTO reminders (due, kind, title) VALUES (?, ?, ?)", (due.isoformat(timespec="minutes"), kind, title)
-        )
-        self.db.commit()
-        return cur.lastrowid
-
-    def due(self) -> list[tuple[int, str, str]]:
-        now = dt.datetime.now().isoformat(timespec="minutes")
-        return self.db.execute(
-            "SELECT id, kind, title FROM reminders WHERE done = 0 AND due <= ? ORDER BY due", (now,)
-        ).fetchall()
-
-    def pending(self) -> list[tuple[int, str, str, str]]:
-        return self.db.execute("SELECT id, due, kind, title FROM reminders WHERE done = 0 ORDER BY due").fetchall()
-
-    def done(self, rid: int) -> None:
-        self.db.execute("UPDATE reminders SET done = 1 WHERE id = ?", (rid,))
-        self.db.commit()
-
-
-def parse_when(words: list[str]) -> tuple[dt.datetime, list[str]] | None:
-    """'18:30 ...' (today or tomorrow) or '2026-10-14 18:30 ...'."""
-    now = dt.datetime.now()
-    try:
-        if len(words) >= 2 and re.fullmatch(r"\d{4}-\d{2}-\d{2}", words[0]):
-            when = dt.datetime.fromisoformat(f"{words[0]} {words[1]}")
-            return when, words[2:]
-        if words and re.fullmatch(r"\d{1,2}:\d{2}", words[0]):
-            h, m = map(int, words[0].split(":"))
-            when = now.replace(hour=h, minute=m, second=0, microsecond=0)
-            if when <= now:
-                when += dt.timedelta(days=1)
-            return when, words[1:]
-    except ValueError:
-        return None
-    return None
-
-
 # ---------------------------------------------------------------- Bob link
 class Bob:
     def __init__(self, args: argparse.Namespace) -> None:
@@ -246,46 +58,66 @@ class Bob:
         self.photo_waiter: asyncio.Future | None = None
         self.last_keep_awake = 0.0
         self.say_lock = asyncio.Lock()
+        self.send_lock = asyncio.Lock()
         self.tasks: set[asyncio.Task] = set()
+        self.photo_lock = asyncio.Lock()
+        self.sequence = 0
+        self.stt_busy = False
+        self.token = args.token
 
     # -- sending
-    async def send(self, **msg: object) -> None:
-        if self.ws is not None:
-            await self.ws.send(json.dumps(msg))
+    async def send(self, **msg: object) -> bool:
+        async with self.send_lock:
+            expected = SESSION.get()
+            if self.ws is None or (expected is not None and self.ws is not expected):
+                raise SessionGone("robot is disconnected or session changed")
+            validate_outgoing(msg)
+            self.sequence += 1
+            msg.update(token=self.token, seq=self.sequence)
+            await asyncio.wait_for(self.ws.send(json.dumps(msg)), 2)
+            return True
 
-    async def say(self, text: str) -> None:
-        log(f"Bob says: {text}")
-        await self.send(type="show", line1=text[:21], line2=text[21:42], ms=max(3000, 80 * len(text)))
-        if self.ws is None:
-            return
-        try:
-            pcm = scale_pcm(await synthesize(text), self.args.volume)
-        except Exception as exc:  # noqa: BLE001 - speech is optional, the OLED already shows the text
-            log(f"(no voice: {exc})")
-            return
+    async def say(self, text: str) -> bool:
+        text = text[:500]
         async with self.say_lock:
+            target = self.ws
+            log(f"Bob says: {text}")
+            await self.send(type="show", line1=text[:21], line2=text[21:42], ms=min(60000, max(3000, 80 * len(text))))
             await self.send(type="say_start")
-            step = PLAY_CHUNK_SAMPLES * 2
-            start = time.monotonic()
-            for i in range(0, len(pcm), step):
-                if self.ws is None:
-                    return
-                await self.ws.send(bytes([TAG_PLAY]) + pcm[i : i + step])
-                ahead = (i + step) / 2 / RATE - (time.monotonic() - start)
-                if ahead > 0.3:  # stay at most 300 ms ahead of playback
-                    await asyncio.sleep(ahead - 0.3)
-            await self.send(type="say_end")
+            try:
+                try:
+                    pcm = scale_pcm(await synthesize(text), self.args.volume)
+                except Exception as exc:
+                    if target is not self.ws:
+                        raise SessionGone("session changed during synthesis") from exc
+                    log(f"(no voice: {exc}; text sent to OLED)")
+                    return True
+                if target is not self.ws:
+                    raise SessionGone("session changed during synthesis")
+                step = PLAY_CHUNK_SAMPLES * 2
+                start = time.monotonic()
+                for i in range(0, len(pcm), step):
+                    if target is not self.ws:
+                        raise SessionGone("session changed during playback")
+                    await asyncio.wait_for(target.send(bytes([TAG_PLAY]) + pcm[i:i+step]), 2)
+                    ahead = (i + min(step, len(pcm)-i)) / 2 / RATE - (time.monotonic() - start)
+                    if ahead > 0:
+                        await asyncio.sleep(ahead)
+                return True
+            finally:
+                if target is self.ws and target is not None:
+                    await self.send(type="say_end")
 
-    async def take_photo(self, timeout: float = 5.0) -> pathlib.Path | None:
-        loop = asyncio.get_running_loop()
-        self.photo_waiter = loop.create_future()
-        await self.send(type="photo")
-        try:
-            return await asyncio.wait_for(self.photo_waiter, timeout)
-        except asyncio.TimeoutError:
-            return None
-        finally:
-            self.photo_waiter = None
+    async def take_photo(self, timeout: float = 8.0) -> pathlib.Path | None:
+        async with self.photo_lock:
+            self.photo_waiter = asyncio.get_running_loop().create_future()
+            try:
+                await self.send(type="photo")
+                return await asyncio.wait_for(self.photo_waiter, timeout)
+            except asyncio.TimeoutError:
+                return None
+            finally:
+                self.photo_waiter = None
 
     # -- receiving
     async def on_text(self, msg: dict) -> None:
@@ -305,7 +137,7 @@ class Bob:
                 )
         elif t == "wiring":
             problems = msg.get("problems", 0)
-            log(f"wiring check: {'all connections OK' if not problems else f'{problems} problem(s)'}")
+            log(f"wiring check: {'no software-detected failures; bench checks required' if not problems else f'{problems} problem(s)'}")
             for item in msg.get("items", []):
                 if item.get("result") != "OK" or self.args.verbose:
                     log(f"  {item.get('result'):<5} {item.get('part')}: {item.get('detail')}")
@@ -315,13 +147,11 @@ class Bob:
             log(f"from Bob: {msg}")
 
     async def on_binary(self, data: bytes) -> None:
-        if not data:
-            return
-        tag, body = data[0], data[1:]
+        tag, body = validate_binary(data)
         if tag == TAG_IMAGE:
             PHOTOS.mkdir(exist_ok=True)
-            path = PHOTOS / time.strftime("%Y%m%d-%H%M%S.jpg")
-            path.write_bytes(body)
+            path = PHOTOS / (dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f") + ".jpg")
+            await asyncio.to_thread(path.write_bytes, body)
             log(f"photo saved: {path} ({len(body)} bytes)")
             if self.photo_waiter and not self.photo_waiter.done():
                 self.photo_waiter.set_result(path)
@@ -331,19 +161,48 @@ class Bob:
             if self.segmenter.speaking and now - self.last_keep_awake > 5:
                 self.last_keep_awake = now
                 await self.send(type="keep_awake")
-            if utterance and self.transcriber and self.transcriber.model:
+            if utterance and self.transcriber and self.transcriber.model and not self.stt_busy:
                 # Never block the receive loop: Bob keeps streaming while this runs.
-                self.spawn(self.transcribe_and_handle(utterance))
+                self.stt_busy = True
+                if not self.spawn(self.transcribe_and_handle(utterance)):
+                    self.stt_busy = False
 
-    def spawn(self, coro) -> None:
-        task = asyncio.create_task(coro)
+    def spawn(self, coro) -> bool:
+        if len(self.tasks) >= 8:
+            coro.close()
+            log("Busy: command dropped")
+            return False
+        target = self.ws if self.ws is not None else object()
+        async def scoped():
+            marker = SESSION.set(target)
+            try:
+                await coro
+            except SessionGone:
+                pass
+            except Exception as exc:
+                log(f"command failed: {exc}")
+            finally:
+                SESSION.reset(marker)
+        task = asyncio.create_task(scoped())
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
+        return True
+
+    async def cancel_work(self) -> None:
+        tasks = tuple(self.tasks)
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        self.tasks.clear()
 
     async def transcribe_and_handle(self, utterance: bytes) -> None:
-        text = await asyncio.get_running_loop().run_in_executor(None, self.transcriber.transcribe, utterance)
-        if text:
-            await self.heard(text)
+        try:
+            text = await asyncio.to_thread(self.transcriber.transcribe, utterance)
+            if text:
+                await self.heard(text)
+        finally:
+            self.stt_busy = False
 
     # -- conversation
     async def heard(self, text: str) -> None:
@@ -354,7 +213,7 @@ class Bob:
             self.listening_until = 0
             await self.send(type="listen", active=False)
             await self.command(words)
-        elif words.startswith(WAKE_PHRASE):
+        elif words == WAKE_PHRASE or words.startswith(WAKE_PHRASE + " "):
             rest = words[len(WAKE_PHRASE) :].strip()
             if rest:
                 await self.command(rest)
@@ -372,21 +231,22 @@ class Bob:
 
     async def _command(self, w: str) -> None:
         has = lambda *keys: any(k in w for k in keys)  # noqa: E731
-        if has("stop patrol", "stop looking"):
+        if w in ("stop patrol", "stop looking"):
             await self.send(type="patrol", on=False)
             await self.say("Patrol off.")
-        elif has("stop", "halt", "freeze"):
+        elif w in ("stop", "halt", "freeze"):
             await self.send(type="stop")
             await self.say("Stopped.")
-        elif has("patrol", "look around", "explore"):
+        elif w in ("patrol", "start patrol", "look around", "explore"):
             await self.send(type="patrol", on=True)
-            await self.say("Starting a slow patrol.")
-        elif has("turn left"):
+        elif w == "turn left":
             await self.send(type="move", dir="pivot_left", duty=self.args.duty, ms=200)
-        elif has("turn right"):
+        elif w == "turn right":
             await self.send(type="move", dir="pivot_right", duty=self.args.duty, ms=200)
-        elif has("forward", "come here", "move ahead"):
+        elif w in ("forward", "come here", "move ahead"):
             await self.send(type="move", dir="forward", duty=self.args.duty, ms=300)
+        elif w.startswith("remind me "):
+            await self.voice_reminder(w)
         elif has("time"):
             await self.say(time.strftime("It is %I:%M %p.").replace(" 0", " "))
         elif has("date", "what day", "today"):
@@ -408,11 +268,17 @@ class Bob:
         if path is None:
             await self.say("I could not take a photo.")
             return
-        if pytesseract is None:
+        try:
+            import pytesseract
+            from PIL import Image
+        except ImportError:
             await self.say("Photo saved on the laptop.")
             return
         try:
-            text = " ".join(pytesseract.image_to_string(Image.open(path)).split())
+            def ocr():
+                with Image.open(path) as image:
+                    return " ".join(pytesseract.image_to_string(image, timeout=10).split())
+            text = await asyncio.to_thread(ocr)
         except Exception as exc:  # noqa: BLE001 - Tesseract may be missing on PATH
             log(f"OCR failed: {exc}")
             text = ""
@@ -424,6 +290,9 @@ class Bob:
             await self.say("Say: remind me to call mom at 6 30 pm.")
             return
         title, h, mi, ap = m.group(1), int(m.group(2)), int(m.group(3) or 0), m.group(4)
+        if ap and not 1 <= h <= 12:
+            await self.say("Use an hour from one to twelve with AM or PM.")
+            return
         if ap == "pm" and h < 12:
             h += 12
         if ap == "am" and h == 12:
@@ -441,8 +310,14 @@ class Bob:
             if self.ws is None:
                 continue
             for rid, kind, title in self.reminders.due()[:1]:  # one item at a time
-                self.reminders.done(rid)
-                await self.say(f"Reminder: {title}" if kind == "task" else f"{kind.capitalize()}: {title}")
+                marker = SESSION.set(self.ws)
+                try:
+                    if await self.say(f"Reminder: {title}" if kind == "task" else f"{kind.capitalize()}: {title}"):
+                        self.reminders.done(rid)
+                except Exception as exc:
+                    log(f"Reminder remains pending: {exc}")
+                finally:
+                    SESSION.reset(marker)
 
     # -- console
     async def console(self, line: str) -> None:
@@ -467,7 +342,7 @@ class Bob:
             await self.send(type="patrol", on=bool(args) and args[0].lower() == "on")
         elif cmd == "move" and args:
             duty = int(args[1]) if len(args) > 1 else self.args.duty
-            ms = int(args[2]) if len(args) > 2 else 300
+            ms = int(args[2]) if len(args) > 2 else (300 if args[0] == "forward" else 200)
             await self.send(type="move", dir=args[0], duty=duty, ms=ms)
         elif cmd == "stop":
             await self.send(type="stop")
@@ -517,6 +392,7 @@ CONSOLE_HELP = """
 
 async def main() -> None:
     p = argparse.ArgumentParser(description="Bob laptop server")
+    p.add_argument("--host", default="127.0.0.1", help="bind LAN IP explicitly for the robot")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--model", default="base.en", help="faster-whisper model (tiny.en is faster)")
     p.add_argument("--no-stt", action="store_true", help="do not load speech-to-text")
@@ -524,26 +400,15 @@ async def main() -> None:
     p.add_argument("--duty", type=int, default=30, help="motor duty for voice moves, percent")
     p.add_argument("--verbose", action="store_true", help="print every status message")
     args = p.parse_args()
+    args.token = os.environ.get("BOB_TOKEN", "")
+    if len(args.token) < 32:
+        p.error("set BOB_TOKEN to a shared random token of at least 32 characters")
+    if not 0 < args.volume <= 1 or not 1 <= args.duty <= 40:
+        p.error("volume must be (0,1]; duty must be 1..40")
 
     bob = Bob(args)
 
-    async def handler(ws) -> None:
-        if ws.request.path != "/bob":
-            await ws.close(code=1008, reason="use /bob")
-            return
-        bob.ws = ws
-        try:
-            async for message in ws:
-                if isinstance(message, bytes):
-                    await bob.on_binary(message)
-                else:
-                    await bob.on_text(json.loads(message))
-        except Exception as exc:  # noqa: BLE001 - keep the server up whatever one client does
-            log(f"connection error: {exc}")
-        finally:
-            if bob.ws is ws:
-                bob.ws = None
-                log("Bob disconnected")
+    link = RobotLink(bob)
 
     loop = asyncio.get_running_loop()
     lines: asyncio.Queue[str] = asyncio.Queue()
@@ -555,7 +420,7 @@ async def main() -> None:
 
     threading.Thread(target=read_stdin, daemon=True).start()
 
-    async with serve(handler, "0.0.0.0", args.port, max_size=2**22, ping_interval=20):
+    async with serve(link.handle, args.host, args.port, max_size=524289, max_queue=4, compression=None, ping_interval=2, ping_timeout=2):
         log(f"Bob server on port {args.port}. Put this laptop's IP in code/bob/secrets.h. Type help.")
         reminders = asyncio.create_task(bob.reminder_loop())
         while True:
@@ -563,10 +428,22 @@ async def main() -> None:
             if line.strip().lower() in ("quit", "exit"):
                 break
             try:
-                await bob.console(line)
+                if line.strip().lower() == "stop":
+                    await bob.send(type="stop")
+                    await bob.cancel_work()
+                else:
+                    bob.spawn(bob.console(line))
             except Exception as exc:  # noqa: BLE001 - a bad console line must not stop the server
                 print(f"error: {exc}")
+        if bob.ws is not None:
+            try:
+                await bob.send(type="stop")
+            except Exception:
+                pass
         reminders.cancel()
+        await asyncio.gather(reminders, return_exceptions=True)
+        await bob.cancel_work()
+    bob.reminders.db.close()
 
 
 if __name__ == "__main__":

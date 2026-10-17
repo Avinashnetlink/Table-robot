@@ -1,8 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T02 — Built-in microphone
 
-Reads the Sense board's PDM microphone (clock GPIO42, data GPIO41) and prints the sound level 20 times a second.
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
 
-![XIAO pinout](00-xiao-pinout.png)
+Reads the Sense board's PDM microphone (clock GPIO42, data GPIO41) and prints the sound level 20 times a second.
 
 ## Wiring
 

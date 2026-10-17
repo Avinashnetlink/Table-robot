@@ -1,3 +1,4 @@
+#include <Wire.h>
 // T01 — Camera
 // Reads the camera ID (OV2640 / OV3660), takes test photos, and optionally
 // serves the latest photo at http://<bob-ip>/photo.jpg so you can see it.
@@ -87,12 +88,23 @@ void handlePhoto() {
   esp_camera_fb_return(fb);
 }
 
+
+// Reset the retained expander latch BEFORE any startup delay.
+static void benchSafeBoot() {
+  for (int p : {D2, D3, D8, D9}) { digitalWrite(p, LOW); pinMode(p, OUTPUT); }
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  for (uint8_t a : {0x20, 0x38}) {
+    Wire.beginTransmission(a); Wire.write(0xFF); Wire.endTransmission();
+  }
+}
+
 void setup() {
+  benchSafeBoot();
   Serial.begin(115200);
   delay(1500);
   Serial.println("\n=== T01 camera ===");
 
-  Serial.printf("PSRAM: %s, %u bytes\n", psramFound() ? "found" : "MISSING", ESP.getPsramSize());
+  Serial.printf("PSRAM: %s, %u bytes\n", psramFound() ? "found" : "MISSING", unsigned(ESP.getPsramSize()));
   if (!psramFound()) Serial.println("FAIL: set Tools > PSRAM > OPI PSRAM and upload again.");
 
   if (!cameraBegin()) {

@@ -1,8 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T10 — Bumper
 
-Prints every bumper press and release on D1.
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
 
-![Bumper wiring](09-bumper.png)
+Prints every bumper press and release on D1.
 
 ## Wiring
 

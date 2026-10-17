@@ -68,7 +68,18 @@ void chime() {
   ampOn(false);
 }
 
+
+// Reset the retained expander latch BEFORE any startup delay.
+static void benchSafeBoot() {
+  for (int p : {D2, D3, D8, D9}) { digitalWrite(p, LOW); pinMode(p, OUTPUT); }
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  for (uint8_t a : {0x20, 0x38}) {
+    Wire.beginTransmission(a); Wire.write(0xFF); Wire.endTransmission();
+  }
+}
+
 void setup() {
+  benchSafeBoot();
   Serial.begin(115200);
   delay(1500);
   Serial.println("\n=== T11 speaker ===");

@@ -1,10 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T06 — Battery voltage
 
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+
 Reads the cell voltage through the R1/R2 divider on ADS1115 A3, compares it with your multimeter, and prints a calibration number.
-
-![Power wiring](01-power.png)
-
-![ADS1115 wiring](03-ads1115.png)
 
 ## Wiring
 
@@ -19,7 +19,7 @@ Check battery polarity at the XIAO pads with the meter **before** soldering: neg
 
 ## Library
 
-Adafruit ADS1X15.
+No external ADC library; checked register access.
 
 ## Steps
 
@@ -31,7 +31,7 @@ Adafruit ADS1X15.
 ## Expected output
 
 ```
-cell 3.962 V  [OK]   A0 0.012  A1 0.010  A2 0.011
+cell 3.962 V  [OK]
 Meter 3.980 V, ADC 3.962 V -> error -18 mV
   constexpr float BATTERY_CAL = 1.0045;
 PASS - within 50 mV

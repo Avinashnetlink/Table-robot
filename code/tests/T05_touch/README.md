@@ -1,8 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T05 — Touch pad
 
-Measures the copper pad on D0 untouched and touched, and prints the three numbers the full firmware needs.
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
 
-![Touch pad wiring](08-touch-pad.png)
+Measures the copper pad on D0 untouched and touched, and prints the three numbers the full firmware needs.
 
 ## Wiring
 

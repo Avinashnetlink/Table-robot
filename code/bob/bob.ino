@@ -2,7 +2,7 @@
 // See README.md in this folder for setup, libraries and the laptop protocol.
 //
 // Board: XIAO_ESP32S3, PSRAM: OPI PSRAM, USB CDC On Boot: Enabled,
-//        Partition scheme: Default with spiffs (3MB APP/1.5MB SPIFFS).
+//        Partition scheme: default 8 MB (3 MB application).
 
 #include <WiFi.h>
 #include <Wire.h>
@@ -19,6 +19,7 @@
 #include "safety.h"
 #include "sensors.h"
 #include "wiring.h"
+#include "diagnostics.h"
 
 static uint32_t lastActivity = 0, lastStatus = 0;
 static bool wasConnected = false;
@@ -35,30 +36,8 @@ static void sendEvent(const char *what, const char *detail, bool ok) {
   netSend(doc);
 }
 
-static void sendStatus() {
-  SafetySnapshot s = safetyGet();
-  JsonDocument doc;
-  doc["type"] = "status";
-  doc["state"] = speaking() ? "speaking" : s.moving ? "moving" : "awake";
-  doc["battery_v"] = serialized(String(s.battery, 2));
-  doc["battery_low"] = s.batteryWarn;
-  doc["sensors_ok"] = s.sensorsOk;
-  JsonArray table = doc["table"].to<JsonArray>();
-  JsonArray edge = doc["edge_v"].to<JsonArray>();
-  for (int i = 0; i < 3; i++) {
-    table.add(s.table[i]);
-    edge.add(serialized(String(s.edgeV[i], 3)));
-  }
-  doc["bumper"] = s.bumper;
-  doc["fault"] = s.fault;
-  doc["unlocked"] = s.unlocked;
-  doc["patrol"] = s.patrol;
-  doc["moving"] = s.moving;
-  doc["rssi"] = WiFi.RSSI();
-  netSend(doc);
-}
-
 static void sendPhoto() {
+  safetyStopAll("photo");
   camera_fb_t *fb = cameraCapture();
   if (!fb) {
     sendEvent("photo", "camera failed", false);
@@ -87,21 +66,28 @@ static void onText(JsonDocument &msg) {
     displaySetMood(msg["state"] | "awake");
   } else if (!strcmp(type, "listen")) {
     displaySetMood(msg["active"] | false ? "listening" : "awake");
+  } else if (!strcmp(type, "say_start")) {
+    safetyStopAll("speech");
   } else if (!strcmp(type, "say_end")) {
     speakerEnd();
+    safetySetSpeaking(false);
   } else if (!strcmp(type, "move")) {
     Dir d;
     if (!parseDir(msg["dir"] | "", d)) {
       sendEvent("move_result", "unknown direction (reverse is disabled)", false);
+    } else if (d != Dir::Stop && (!msg["duty"].is<int>() || !msg["ms"].is<uint32_t>())) {
+      sendEvent("move_result", "invalid numeric fields", false);
     } else if (!safetyRequestMove(d, msg["duty"] | 0, msg["ms"] | 0)) {
       sendEvent("move_result", "busy", false);
     }
   } else if (!strcmp(type, "patrol")) {
-    safetySetPatrol(msg["on"] | false);
+    if (msg["on"].is<bool>()) safetySetPatrol(msg["on"].as<bool>());
   } else if (!strcmp(type, "stop")) {
     safetyStopAll("laptop stop");
   } else if (!strcmp(type, "photo")) {
     sendPhoto();
+  } else if (!strcmp(type, "status")) {
+    diagnosticsStatus();
   } else if (!strcmp(type, "sleep")) {
     powerSleepNow();
   }
@@ -116,20 +102,19 @@ static void onBinary(uint8_t tag, const uint8_t *data, size_t len) {
 }
 
 // ---------- Setup ----------
-static void startWatchdog() {
+static bool startWatchdog() {
   esp_task_wdt_config_t cfg = {};
   cfg.timeout_ms = WDT_TIMEOUT_MS;
   cfg.idle_core_mask = 0;
   cfg.trigger_panic = true;  // a hung task resets the board; the 100k pulldowns then stop the wheels
-  if (esp_task_wdt_reconfigure(&cfg) != ESP_OK) esp_task_wdt_init(&cfg);
-  esp_task_wdt_add(nullptr);
+  if (esp_task_wdt_reconfigure(&cfg) != ESP_OK && esp_task_wdt_init(&cfg) != ESP_OK) return false;
+  return esp_task_wdt_add(nullptr) == ESP_OK;
 }
 
 void setup() {
-  MotorPinsAtBoot bootPins = wiringReadMotorPins();  // only reads; must run before motionBegin()
-  motionBegin();  // motor inputs low before anything else
+  bool motorOk = motionBegin();  // motor inputs low before anything else
   Serial.begin(115200);
-  busBegin();
+  bool busOk = busBegin();
   bool pcfOk = pcfBegin();  // the PCF8574 kept its old outputs through the reset
   delay(300);
   Serial.printf("\nBob %s, woke by %s\n", FIRMWARE, wakeReason());
@@ -138,6 +123,7 @@ void setup() {
   displaySetText("Hello!", wakeReason(), 3000);
   displaySetMood("offline");
   bool adsOk = sensorsBegin();
+  bool edgeOk = edgesBegin();
   touchBegin();
   bool audioOk = audioBegin();
   bool camOk = cameraBegin();
@@ -145,13 +131,17 @@ void setup() {
                 oledOk ? "ok" : "MISSING", adsOk ? "ok" : "MISSING", audioOk ? "ok" : "FAIL", cameraName());
   if (!pcfOk || !adsOk) Serial.println("Motion stays disabled: the expander or ADC is missing.");
 
-  wiringCheck(bootPins, pcfOk, oledOk, adsOk, audioOk, camOk);
+  wiringCheck(pcfOk, oledOk, adsOk, edgeOk, audioOk, camOk);
   wiringPrint();
   if (wiringProblems()) displaySetText("Wiring!", wiringFirstProblem(), 6000);
-  else displaySetText("Hello!", "wiring OK", 3000);
+  else displaySetText("Hello!", "bench checks due", 3000);
 
-  startWatchdog();  // before the safety task starts, so it can subscribe
-  safetyBegin();
+  bool watchdogOk = startWatchdog();  // before the safety task starts, so it can subscribe
+  if (!safetyBegin(watchdogOk && busOk && motorOk && pcfOk && adsOk && edgeOk)) {
+    motionStop(); pcfReleaseAll();
+    Serial.println("FATAL: safety task allocation failed");
+    while (true) { esp_task_wdt_reset(); delay(100); }
+  }
   netBegin(onText, onBinary);
   activity();
 }
@@ -161,6 +151,7 @@ void loop() {
   esp_task_wdt_reset();
   uint32_t now = millis();
 
+  diagnosticsService();
   netLoop();
   bool connected = netConnected();
   if (connected != wasConnected) {
@@ -176,15 +167,19 @@ void loop() {
   }
 
   switch (touchService()) {
+    case TouchEvent::Press:
+      safetyStopAll("touch press");
+      activity();
+      break;
     case TouchEvent::Hold:
       safetySetUnlocked(true);
-      displaySetText("Drive", "unlocked", 2000);
+      displaySetText("Drive", safetyGet().unlocked ? "unlocked" : "locked - see log", 2000);
       sendEvent("touch", "hold", true);
       activity();
       break;
     case TouchEvent::Tap: {
       SafetySnapshot s = safetyGet();
-      if (s.patrol || s.moving) {
+      if (s.patrol || s.moving || s.unlocked) {
         safetyStopAll("touch");
         displaySetText("Stopped", "by touch", 2000);
       }
@@ -200,7 +195,7 @@ void loop() {
   while (safetyPopEvent(e)) {
     sendEvent(e.what, e.detail, e.ok);
     Serial.printf("[%s] %s\n", e.what, e.detail);
-    if (!strcmp(e.what, "bumper") || !strcmp(e.what, "fault") || !strcmp(e.what, "sensor")) {
+    if (!strcmp(e.what, "bumper") || !strcmp(e.what, "fault") || !strcmp(e.what, "sensor") || !strcmp(e.what, "stopped")) {
       displaySetText("Stop!", e.detail, 3000);
     } else if (!strcmp(e.what, "battery")) {
       if (!strcmp(e.detail, "empty")) powerSleepNow();
@@ -217,10 +212,11 @@ void loop() {
   }
 
   SafetySnapshot s = safetyGet();
-  if (connected && now - lastStatus > STATUS_EVERY_MS) {
+  if (now - lastStatus > STATUS_EVERY_MS) {
     lastStatus = now;
-    sendStatus();
+    diagnosticsStatus();
   }
+  if (s.sleepRequested) powerSleepNow();
   displayUpdate(s.battery, s.batteryWarn, netWifiUp(), s.unlocked, s.patrol);
 
   bool busy = s.patrol || s.moving || speaking() || touchDown();

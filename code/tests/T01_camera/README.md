@@ -1,8 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T01 — Camera
 
-Checks that PSRAM is on, reads the camera's name, and takes five photos. With Wi-Fi details filled in, it also shows the photo in a browser.
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
 
-![XIAO pinout](00-xiao-pinout.png)
+Checks that PSRAM is on, reads the camera's name, and takes five photos. With Wi-Fi details filled in, it also shows the photo in a browser.
 
 ## Wiring
 

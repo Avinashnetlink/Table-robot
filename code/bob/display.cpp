@@ -6,7 +6,8 @@
 #include "bus.h"
 #include "config.h"
 
-static Adafruit_SSD1306 oled(128, 64, &Wire, -1);
+static Adafruit_SSD1306 oled(128, 64, &Wire, -1, I2C_HZ, I2C_HZ);
+static uint16_t cursor = 1024;
 static bool ok = false;
 static char text1[22] = "", text2[22] = "";
 static uint32_t textUntil = 0;
@@ -16,7 +17,10 @@ static uint32_t lastHash = 0;
 
 bool displayBegin() {
   BusLock lock;
-  ok = oled.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
+  if (!lock) return false;
+  Wire.beginTransmission(OLED_ADDR);
+  if (Wire.endTransmission() != 0) return false;
+  ok = oled.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR, true, false);
   if (ok) {
     oled.clearDisplay();
     oled.display();
@@ -27,7 +31,7 @@ bool displayBegin() {
 void displaySetText(const char *line1, const char *line2, uint32_t holdMs) {
   strlcpy(text1, line1 ? line1 : "", sizeof(text1));
   strlcpy(text2, line2 ? line2 : "", sizeof(text2));
-  textUntil = millis() + holdMs;
+  textUntil = millis() + min(holdMs, uint32_t(60000));
 }
 
 void displaySetMood(const char *state) { strlcpy(mood, state, sizeof(mood)); }
@@ -49,10 +53,28 @@ static void drawEyes(bool blink) {
   if (!strcmp(mood, "speaking")) oled.drawRoundRect(52, y + 28, 24, 6, 3, SSD1306_WHITE);
 }
 
+// A full 1 KB frame at 100 kHz takes ~100 ms. Send only 64 bytes per loop,
+// yielding the bus to the safety task between chunks. Explicit page addressing.
+static bool pump() {
+  if (cursor >= 1024) return false;
+  BusLock lock;
+  if (!lock) return true;
+  Wire.beginTransmission(OLED_ADDR);
+  Wire.write(0x00); Wire.write(0x21); Wire.write(cursor % 128); Wire.write(cursor % 128 + 63);
+  Wire.write(0x22); Wire.write(cursor / 128); Wire.write(cursor / 128);
+  if (Wire.endTransmission() != 0) { ok = false; return true; }
+  Wire.beginTransmission(OLED_ADDR); Wire.write(0x40);
+  Wire.write(oled.getBuffer() + cursor, 64);
+  if (Wire.endTransmission() != 0) { ok = false; return true; }
+  cursor += 64;
+  return cursor < 1024;
+}
+
 void displayUpdate(float battery, bool batteryWarn, bool wifi, bool unlocked, bool patrol) {
   if (!ok) return;
+  if (pump()) return;
   uint32_t now = millis();
-  bool showText = now < textUntil && (text1[0] || text2[0]);
+  bool showText = int32_t(textUntil - now) > 0 && (text1[0] || text2[0]);
   bool blink = (now / 250) % 16 == 0;
 
   // Redraw only when something visible changed, at most 5 times a second.
@@ -71,7 +93,6 @@ void displayUpdate(float battery, bool batteryWarn, bool wifi, bool unlocked, bo
   lastHash = hash;
   lastDraw = now;
 
-  BusLock lock;
   oled.clearDisplay();
   oled.setTextColor(SSD1306_WHITE);
   oled.setTextSize(1);
@@ -96,13 +117,13 @@ void displayUpdate(float battery, bool batteryWarn, bool wifi, bool unlocked, bo
     oled.setCursor(0, 56);
     oled.print(mood);
   }
-  oled.display();
+  cursor = 0;
 }
 
 void displayOff() {
   if (!ok) return;
   BusLock lock;
-  oled.clearDisplay();
-  oled.display();
+  if (!lock) return;
+  cursor = 1024;
   oled.ssd1306_command(SSD1306_DISPLAYOFF);
 }

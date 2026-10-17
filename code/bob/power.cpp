@@ -8,6 +8,7 @@
 #include "net.h"
 #include "pcf.h"
 #include "safety.h"
+#include "sensors.h"
 
 static float baseline = TOUCH_IDLE;
 static bool down = false, holdFired = false;
@@ -25,6 +26,7 @@ TouchEvent touchService() {
   lastRead = now;
 
   uint32_t v = touchRead(PIN_TOUCH);
+  if (v == 0) return TouchEvent::None;
   bool pressed = v > baseline + TOUCH_PRESS_DELTA;
   if (!pressed) baseline += (v - baseline) * 0.01f;  // follow slow drift (humidity, temperature)
 
@@ -33,6 +35,7 @@ TouchEvent touchService() {
     down = true;
     holdFired = false;
     downAt = now;
+    ev = TouchEvent::Press;
   } else if (pressed && down && !holdFired && now - downAt >= UNLOCK_HOLD_MS) {
     holdFired = true;
     ev = TouchEvent::Hold;
@@ -54,9 +57,14 @@ const char *wakeReason() {
 }
 
 void powerSleepNow() {
-  safetySuspend();   // motors stopped, safety task off the I2C bus
+  if (!safetySuspend()) {
+    Serial.println("Safety task did not acknowledge sleep; restarting with motors off");
+    ESP.restart();
+    while (true) delay(1);
+  }
+  edgesEnd();
   audioEnd();        // amp off
-  pcfReleaseAll();   // LEDs, amp and driver off; the PCF8574 keeps this through sleep
+  pcfReleaseAll();   // amp and driver off; the PCF8574 keeps this through sleep
   displayOff();
   cameraEnd();
   netEnd();

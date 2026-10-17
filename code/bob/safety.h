@@ -7,11 +7,16 @@ struct SafetySnapshot {
   bool batteryValid, batteryOk, batteryWarn;
   bool sensorsOk;
   bool table[3];  // left, right, center
-  float edgeV[3];
+  uint16_t edgeMm[3];
+  uint8_t edgeStatus[3];
+  bool edgeValid[3];
   bool bumper, fault;
   bool moving;
   Dir dir;
   bool patrol, unlocked, speaking;
+  bool linkOk, calibrated, sleepRequested;
+  uint32_t sampleAt, batteryAt, cycleMs, maxCycleMs;
+  const char *stopReason;
   uint32_t cycles;  // sensor cycles completed
 };
 
@@ -21,16 +26,18 @@ struct SafetyEvent {
   bool ok;
 };
 
-// The safety task runs on its own, reads every sensor about every 25 ms,
+// The safety task runs independently; acquisition timing is reported in telemetry,
 // and is the only code that starts the motors.
-void safetyBegin();
-void safetySuspend();  // before deep sleep: motors off, task stops using I2C
+bool safetyBegin(bool healthy);
+bool safetySuspend();  // before deep sleep: motors off, task stops using I2C
 
 SafetySnapshot safetyGet();
 bool safetyPopEvent(SafetyEvent &e);
 
 bool safetyRequestMove(Dir d, int dutyPercent, uint32_t ms);  // result arrives as a "move_result" event
-void safetyStopAll(const char *why);  // motors off and patrol off, immediately
+void safetyStopAll(const char *why);  // serialized stop, queue purge and relock
 void safetySetPatrol(bool on);
 void safetySetUnlocked(bool on);
 void safetySetSpeaking(bool on);  // no motion while the speaker plays
+
+void safetyHeartbeat();

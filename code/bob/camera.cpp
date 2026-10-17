@@ -4,6 +4,7 @@
 static bool ok = false;
 
 bool cameraBegin() {
+  if (!psramFound()) return false;
   camera_config_t c = {};
   // XIAO ESP32-S3 Sense camera connector
   c.pin_d0 = 15;
@@ -39,9 +40,11 @@ bool cameraBegin() {
 const char *cameraName() {
   if (!ok) return "none";
   sensor_t *s = esp_camera_sensor_get();
+  if (!s) return "none";
   switch (s->id.PID) {
     case OV2640_PID: return "OV2640";
     case OV3660_PID: return "OV3660";
+    case OV5640_PID: return "OV5640";
     default: return "unknown";
   }
 }
@@ -49,15 +52,20 @@ const char *cameraName() {
 camera_fb_t *cameraCapture() {
   if (!ok) return nullptr;
   camera_fb_t *old = esp_camera_fb_get();  // may be stale; take a fresh one
-  if (old) esp_camera_fb_return(old);
-  return esp_camera_fb_get();
+  if (!old) return nullptr;
+  esp_camera_fb_return(old);
+  camera_fb_t *fb = esp_camera_fb_get();
+  if (fb && (fb->format != PIXFORMAT_JPEG || !fb->buf || fb->len < 4 || fb->len > 512 * 1024)) {
+    esp_camera_fb_return(fb); return nullptr;
+  }
+  return fb;
 }
 
 void cameraEnd() {
   if (!ok) return;
   sensor_t *s = esp_camera_sensor_get();
   // OV3660 system control 0x3008 bit 6 = software power down.
-  if (s && s->id.PID == OV3660_PID) s->set_reg(s, 0x3008, 0xFF, 0x42);
+  if (s && s->id.PID == OV3660_PID) s->set_reg(s, 0x3008, 0x40, 0x40);
   esp_camera_deinit();
   ok = false;
 }

@@ -1,9 +1,1 @@
-websockets>=13
-
-# Optional: speech-to-text for "Hey Bob"
-# faster-whisper
-# numpy
-
-# Optional: read text in photos (also install the Tesseract program)
-# pytesseract
-# pillow
+websockets==17.2

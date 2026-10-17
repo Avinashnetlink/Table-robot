@@ -1,3 +1,4 @@
+#include <Wire.h>
 // T13 — Wi-Fi and the laptop link
 // Connects to Wi-Fi, opens the WebSocket to the laptop server
 // (code/laptop/server.py), sends a status every 2 s, and prints what the laptop
@@ -10,6 +11,10 @@
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 #include "secrets.h"
+#ifndef BOB_TOKEN
+#define BOB_TOKEN ""
+#endif
+static String authHeader;
 
 WebSocketsClient ws;
 bool connected = false;
@@ -43,7 +48,18 @@ void onEvent(WStype_t type, uint8_t *payload, size_t len) {
   }
 }
 
+
+// Reset the retained expander latch BEFORE any startup delay.
+static void benchSafeBoot() {
+  for (int p : {D2, D3, D8, D9}) { digitalWrite(p, LOW); pinMode(p, OUTPUT); }
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  for (uint8_t a : {0x20, 0x38}) {
+    Wire.beginTransmission(a); Wire.write(0xFF); Wire.endTransmission();
+  }
+}
+
 void setup() {
+  benchSafeBoot();
   Serial.begin(115200);
   delay(1500);
   Serial.println("\n=== T13 Wi-Fi and laptop link ===");
@@ -61,6 +77,8 @@ void setup() {
   }
   Serial.printf("Wi-Fi OK, Bob's IP %s, signal %d dBm\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
   ws.begin(SERVER_HOST, SERVER_PORT, "/bob");
+  authHeader = String("Authorization: Bearer ") + BOB_TOKEN + "\r\n";
+  ws.setExtraHeaders(authHeader.c_str());
   ws.onEvent(onEvent);
   ws.setReconnectInterval(3000);
   Serial.printf("Connecting to ws://%s:%u/bob ... start the laptop server if it is not running.\n", SERVER_HOST, SERVER_PORT);

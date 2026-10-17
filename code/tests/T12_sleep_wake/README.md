@@ -1,10 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T12 — Sleep and touch wake
 
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+
 Counts down 20 seconds on the OLED, turns everything off, and deep-sleeps. Only a touch on the pad wakes it. Use it to measure the sleep current.
-
-![Touch pad](08-touch-pad.png)
-
-![PCF8574 releases everything before sleep](05-pcf8574.png)
 
 ## Before you start
 

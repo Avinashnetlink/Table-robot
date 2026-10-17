@@ -1,3 +1,4 @@
+#include <Wire.h>
 // T02 — Built-in PDM microphone
 // Prints the sound level 20 times a second. Open Tools > Serial Plotter and clap.
 //
@@ -15,7 +16,18 @@ int16_t samples[BLOCK];
 uint32_t blocks = 0;
 int32_t loudestPeak = 0;
 
+
+// Reset the retained expander latch BEFORE any startup delay.
+static void benchSafeBoot() {
+  for (int p : {D2, D3, D8, D9}) { digitalWrite(p, LOW); pinMode(p, OUTPUT); }
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  for (uint8_t a : {0x20, 0x38}) {
+    Wire.beginTransmission(a); Wire.write(0xFF); Wire.endTransmission();
+  }
+}
+
 void setup() {
+  benchSafeBoot();
   Serial.begin(115200);
   delay(1500);
   Serial.println("\n=== T02 microphone ===");
@@ -47,10 +59,10 @@ void loop() {
   if (peak > loudestPeak) loudestPeak = peak;
 
   // Serial Plotter format
-  Serial.printf("level:%d peak:%d\n", rms, peak);
+  Serial.printf("level:%d peak:%d\n", int(rms), int(peak));
 
   if (++blocks % 100 == 0) {
-    Serial.printf("# loudest peak in the last 5 s: %d (%s)\n", loudestPeak,
+    Serial.printf("# loudest peak in the last 5 s: %d (%s)\n", int(loudestPeak),
                   loudestPeak > 3000 ? "PASS, the mic hears you" : "quiet - clap closer");
     loudestPeak = 0;
   }

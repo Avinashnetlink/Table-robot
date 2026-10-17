@@ -8,7 +8,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-Adafruit_SSD1306 display(128, 64, &Wire, -1);
+Adafruit_SSD1306 display(128, 64, &Wire, -1, 100000, 100000);
 
 void drawFace(bool eyesOpen, uint32_t n) {
   display.clearDisplay();
@@ -31,16 +31,30 @@ void drawFace(bool eyesOpen, uint32_t n) {
   display.display();
 }
 
+
+// Reset the retained expander latch BEFORE any startup delay.
+static void benchSafeBoot() {
+  for (int p : {D2, D3, D8, D9}) { digitalWrite(p, LOW); pinMode(p, OUTPUT); }
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  for (uint8_t a : {0x20, 0x38}) {
+    Wire.beginTransmission(a); Wire.write(0xFF); Wire.endTransmission();
+  }
+}
+
+bool present(uint8_t address) {
+  Wire.beginTransmission(address); return Wire.endTransmission() == 0;
+}
 void setup() {
+  benchSafeBoot();
   Serial.begin(115200);
   delay(1500);
   Serial.println("\n=== T04 OLED ===");
   Wire.begin();
 
   uint8_t addr = 0x3C;
-  if (!display.begin(SSD1306_SWITCHCAPVCC, addr)) {
+  if (!present(addr) || !display.begin(SSD1306_SWITCHCAPVCC, addr)) {
     addr = 0x3D;
-    if (!display.begin(SSD1306_SWITCHCAPVCC, addr)) {
+    if (!present(addr) || !display.begin(SSD1306_SWITCHCAPVCC, addr)) {
       Serial.println("FAIL: no OLED at 0x3C or 0x3D. Check VCC 3V3, GND, SDA D4, SCL D5. Run T03.");
       while (true) delay(1000);
     }

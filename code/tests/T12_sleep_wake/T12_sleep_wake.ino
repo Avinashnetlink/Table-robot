@@ -17,7 +17,7 @@ constexpr uint32_t TOUCH_WAKE_DELTA = 8000;  // from T05
 constexpr uint32_t SLEEP_AFTER_S = 20;
 
 RTC_DATA_ATTR uint32_t bootCount = 0;
-Adafruit_SSD1306 display(128, 64, &Wire, -1);
+Adafruit_SSD1306 display(128, 64, &Wire, -1, 100000, 100000);
 bool haveDisplay = false;
 
 void pcfReleaseAll() {
@@ -49,7 +49,18 @@ void show(const char *a, const char *b) {
   display.display();
 }
 
+
+// Reset the retained expander latch BEFORE any startup delay.
+static void benchSafeBoot() {
+  for (int p : {D2, D3, D8, D9}) { digitalWrite(p, LOW); pinMode(p, OUTPUT); }
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  for (uint8_t a : {0x20, 0x38}) {
+    Wire.beginTransmission(a); Wire.write(0xFF); Wire.endTransmission();
+  }
+}
+
 void setup() {
+  benchSafeBoot();
   for (int p : {D2, D3, D8, D9}) {
     pinMode(p, OUTPUT);
     digitalWrite(p, LOW);
@@ -77,7 +88,7 @@ void setup() {
   Serial.println("Sleeping. Measure battery current now. Say 'Hey Bob' - nothing must happen. Then touch the pad.");
   Serial.flush();
   if (haveDisplay) display.ssd1306_command(SSD1306_DISPLAYOFF);
-  pcfReleaseAll();  // LEDs, amp and driver off
+  pcfReleaseAll();  // amp and driver off
   touchSleepWakeUpEnable(PIN_TOUCH, TOUCH_WAKE_DELTA);
   esp_deep_sleep_start();
 }

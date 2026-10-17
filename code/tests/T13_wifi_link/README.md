@@ -1,8 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T13 — Wi-Fi and laptop link
 
-Connects to Wi-Fi, opens the WebSocket to the laptop server, sends a status every 2 seconds, and prints what the laptop sends back.
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
 
-![XIAO with antenna](00-xiao-pinout.png)
+Connects to Wi-Fi, opens the WebSocket to the laptop server, sends a status every 2 seconds, and prints what the laptop sends back.
 
 ## Before you start
 
@@ -44,3 +46,5 @@ Both PASS lines appear. The signal is better than about −75 dBm where Bob will
 | Wi-Fi does not connect | 2.4 GHz network only; check the password; antenna fitted. |
 | Wi-Fi OK, WebSocket never connects | Wrong laptop IP; Windows Firewall: allow Python on **private** networks when asked, or run `netsh advfirewall firewall add rule name="Bob" dir=in action=allow protocol=TCP localport=8765` in an admin terminal. |
 | Connects then drops | Laptop on a guest network that isolates devices; use the main network. |
+
+Revision 3 server requires `BOB_TOKEN` in this sketch’s `secrets.h`, matching the laptop environment. Start the server with `--host` set to the laptop LAN IP. T13 proves transport only; it does not arm or move motors.

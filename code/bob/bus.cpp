@@ -1,16 +1,12 @@
-// Connections: I2C SDA D4, SCL D5, shared by the OLED (0x3C), ADS1115 (0x48) and PCF8574 (0x20).
 #include "bus.h"
 #include <Wire.h>
 #include "config.h"
-
 static SemaphoreHandle_t busMutex = nullptr;
-
-void busBegin() {
+bool busBegin() {
   busMutex = xSemaphoreCreateRecursiveMutex();
-  Wire.begin();
-  Wire.setClock(I2C_HZ);
-  Wire.setTimeOut(20);
+  if (!busMutex || !Wire.begin(D4, D5, I2C_HZ)) return false;
+  Wire.setTimeOut(10);
+  return true;
 }
-
-BusLock::BusLock() { xSemaphoreTakeRecursive(busMutex, portMAX_DELAY); }
-BusLock::~BusLock() { xSemaphoreGiveRecursive(busMutex); }
+BusLock::BusLock() : held(busMutex && xSemaphoreTakeRecursive(busMutex, pdMS_TO_TICKS(BUS_LOCK_MS)) == pdTRUE) {}
+BusLock::~BusLock() { if (held) xSemaphoreGiveRecursive(busMutex); }

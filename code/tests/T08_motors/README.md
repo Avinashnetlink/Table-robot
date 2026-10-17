@@ -1,10 +1,12 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T08 — Motors, wheels in the air
 
-Runs each motor, both directions, and a stall test, through the DRV8833. Every run has a time limit, and the driver is awake only during a run.
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
+
+Runs short pulses on each motor in both directions, through the DRV8833. Every run has a time limit, and the driver is awake only during a run.
 
 **Wheels off, or the body held so nothing can touch the table.**
-
-![DRV8833 and motors](06-drv8833-motors.png)
 
 ## Wiring
 
@@ -29,22 +31,22 @@ No 3V3 wire to the DRV8833: its VCC / VM pin is the motor supply. Jumper J3 on t
 | --- | --- |
 | `f` | Forward 300 ms |
 | `l` / `r` | Pivot left / right 250 ms |
-| `a` / `A` | Left motor forward / backward 1 s |
-| `b` / `B` | Right motor forward / backward 1 s |
-| `s` / `S` | Stall test, left / right, 100% for 1 s |
-| `+` / `-` | Duty ±5% (starts at 30%) |
+| `a` / `A` | Left motor forward / backward 300 ms |
+| `b` / `B` | Right motor forward / backward 300 ms |
+| `s` / `S` | Disabled; use current-limited bench characterization |
+| `+` / `-` | Duty ±5% (starts at 30%, capped at 40%) |
 | `x` | Stop now |
 
 ## Steps
 
 1. Press `a`: the left wheel turns forward (the way Bob drives). If it turns backward, swap that motor's two wires. Repeat with `b` for the right wheel.
 2. Press `f`, `l`, `r`: forward, pivot left (only the right wheel turns), pivot right (only the left wheel turns).
-3. Stall test: put the meter in series with the battery positive (10 A range first). Hold one wheel still, press `s`, read the current. Repeat with `S`.
+3. Characterize startup/stall current using a current-limited supply and the motor manufacturer’s procedure. Do not hold a wheel at full battery power. Record results in [the inventory sheet](../../../docs/INVENTORY.md).
 4. Reset test: press `a`, and press the XIAO reset button while the wheel turns. It must stop at once and stay stopped.
 
 ## Pass
 
-Correct directions, stall current under about **0.4 A** per motor, no `FAULT` message, and nothing moves at reset.
+Correct directions, measured current within the selected driver/carrier/cell/wiring budget (initial target **0.4 A** per motor), no `FAULT` message, and nothing moves at reset.
 
 ## If it fails
 
@@ -53,5 +55,5 @@ Correct directions, stall current under about **0.4 A** per motor, no `FAULT` me
 | Nothing turns | SLP not reaching ~3.2 V (run T07), VM not connected, or switch off. |
 | Right motor runs at boot, or `b` does nothing | J3 not cut: the microSD pull-ups hold D8/D9. |
 | `driver FAULT` | Overcurrent or short at a motor; check the motor wires and C3/C4. |
-| Stall above 0.4 A, or the motor cannot turn the wheel | Change to the N20 6 V 150 RPM fallback. |
+| Stall above 0.4 A, or the motor cannot turn the wheel | Select a suitable lower-current motor after checking its actual ratings and shaft. |
 | XIAO resets when a motor starts | C1 too far from VM, or a weak battery holder contact. |

@@ -1,8 +1,10 @@
+[Current wiring](../../../docs/HARDWARE.md) · [Circuit image](../../../images/bob-wiring.png)
+
 # T11 — Speaker
 
-Turns on the MAX98357A through the Q1 safe switch, plays a quiet tone and a chime over I2S, then turns the amp off.
+> Follow the [revision 3 hardware/testing procedure](../../../docs/TESTING.md). Component sketches are bench diagnostics; keep motor power isolated except for restrained T08 tests.
 
-![MAX98357A and speaker wiring](07-max98357-speaker.png)
+Turns on the MAX98357A through the Q1 safe switch, plays a quiet tone and a chime over I2S, then turns the amp off.
 
 ## Wiring
 

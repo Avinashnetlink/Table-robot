@@ -1,41 +1,38 @@
-// Connections: PCF8574 at 0x20 on D4 / D5, A0-A2 to GND.
-// P0 sensor LED cathodes, P1 Q1 -> amp SD, P2 Q2 -> driver SLP, P3 <- driver FLT (R21 10k to 3V3).
 #include "pcf.h"
 #include <Wire.h>
 #include "bus.h"
 #include "config.h"
-
 static uint8_t shadow = 0xFF;
-
-static bool writeShadow() {
-  BusLock lock;
+static bool known = false;
+// Called with the bus held. Only ACKed writes update the cached latch.
+static bool writeValue(uint8_t value) {
+  value |= PCF_FAULT | 0xF1;
   Wire.beginTransmission(PCF_ADDR);
-  Wire.write(shadow | PCF_FAULT | 0xF0);  // P3 input and P4-P7 spare stay released
-  return Wire.endTransmission() == 0;
+  Wire.write(value);
+  if (Wire.endTransmission() != 0) { known = false; return false; }
+  shadow = value;
+  known = true;
+  return true;
 }
-
-bool pcfBegin() {
-  shadow = 0xFF;
-  return writeShadow();
-}
-
+bool pcfBegin() { return pcfReleaseAll(); }
 bool pcfReleaseAll() {
-  shadow = 0xFF;
-  return writeShadow();
+  BusLock lock;
+  return lock && writeValue(0xFF);
 }
-
 bool pcfSet(uint8_t bit, bool on) {
   BusLock lock;
+  if (!lock || !bit || (bit & ~(PCF_AMP | PCF_DRIVER))) return false;
+  // Recover to off first after an uncertain write; never replay stale enables.
+  if (!known && !writeValue(0xFF)) return false;
   uint8_t next = on ? (shadow & ~bit) : (shadow | bit);
-  if (next == shadow) return true;
-  shadow = next;
-  return writeShadow();
+  return writeValue(next);  // also detects an unplugged expander on repeated writes
 }
-
-bool pcfIsOn(uint8_t bit) { return !(shadow & bit); }
-
+bool pcfIsOn(uint8_t bit) {
+  BusLock lock;
+  return !lock || !known || !(shadow & bit);  // uncertainty requests a shutdown
+}
 bool pcfFaultActive() {
   BusLock lock;
-  if (Wire.requestFrom(PCF_ADDR, (uint8_t)1) != 1) return true;
+  if (!lock || !known || Wire.requestFrom(PCF_ADDR, uint8_t(1)) != 1) return true;
   return !(Wire.read() & PCF_FAULT);
 }

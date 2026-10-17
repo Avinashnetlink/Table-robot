@@ -11,25 +11,16 @@ const char *deviceName(uint8_t a) {
   if (a >= 0x48 && a <= 0x4B) return "ADS1115 ADC";
   if (a >= 0x20 && a <= 0x27) return "PCF8574 expander";
   if (a >= 0x38 && a <= 0x3B) return "PCF8574A expander";
+  if (a == 0x70) return "TCA9548A edge mux";
+  if (a == 0x29) return "ToF edge sensor";
   return "unknown";
 }
 
 void scan() {
   Serial.println("\n--- scan ---");
 
-  // With nothing driving the bus, both lines must rest high through the pull-ups.
-  pinMode(SDA, INPUT);
-  pinMode(SCL, INPUT);
-  delay(2);
-  bool sdaHigh = digitalRead(SDA), sclHigh = digitalRead(SCL);
-  Serial.printf("SDA (D4) idle: %s   SCL (D5) idle: %s\n", sdaHigh ? "high OK" : "LOW",
-                sclHigh ? "high OK" : "LOW");
-  if (!sdaHigh || !sclHigh) {
-    Serial.println("FAIL: a line is low. Missing pull-ups (fit R23/R24 4.7k), a short to GND, or a module unpowered.");
-  }
-
-  Wire.begin();
-  Wire.setClock(100000);
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  Wire.beginTransmission(0x70); Wire.write(0); Wire.endTransmission();
   bool oled = false, ads = false, pcf = false;
   int found = 0;
   for (uint8_t a = 1; a < 127; a++) {
@@ -42,17 +33,37 @@ void scan() {
       if (a == 0x20 || a == 0x38) pcf = true;
     }
   }
+  bool edges = true;
+  for (uint8_t ch=0; ch<3; ++ch) {
+    Wire.beginTransmission(0x70); Wire.write(uint8_t(1u<<ch));
+    bool ok = Wire.endTransmission()==0;
+    if (ok) { Wire.beginTransmission(0x29); ok=Wire.endTransmission()==0; }
+    Serial.printf("Mux CH%u ToF 0x29: %s\n", ch, ok ? "ACK (identity checked by firmware)" : "MISSING");
+    edges &= ok;
+  }
+  Wire.beginTransmission(0x70); Wire.write(0); Wire.endTransmission();
   Wire.end();
 
   Serial.printf("%d device(s).\n", found);
   Serial.printf("OLED    0x3C : %s\n", oled ? "OK" : "missing");
   Serial.printf("ADS1115 0x48 : %s\n", ads ? "OK (ADDR to GND)" : "missing (ADDR must go to GND)");
   Serial.printf("PCF8574 0x20 : %s\n", pcf ? "OK" : "missing (A0-A2 must go to GND)");
-  Serial.println(oled && ads && pcf ? "PASS" : "Not all parts found yet - fine if they are not wired yet.");
+  Serial.println(oled && ads && pcf && edges ? "PASS" : "Not all parts found yet - fine if they are not wired yet.");
   Serial.println("Press Enter to scan again.");
 }
 
+
+// Reset the retained expander latch BEFORE any startup delay.
+static void benchSafeBoot() {
+  for (int p : {D2, D3, D8, D9}) { digitalWrite(p, LOW); pinMode(p, OUTPUT); }
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  for (uint8_t a : {0x20, 0x38}) {
+    Wire.beginTransmission(a); Wire.write(0xFF); Wire.endTransmission();
+  }
+}
+
 void setup() {
+  benchSafeBoot();
   Serial.begin(115200);
   delay(1500);
   Serial.println("\n=== T03 I2C scan ===");

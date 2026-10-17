@@ -1,3 +1,4 @@
+#include <Wire.h>
 // T05 — Copper touch pad on D0 (through R13 470 ohm)
 // Measures the pad untouched and touched, then prints the numbers to copy
 // into code/bob/config.h: TOUCH_IDLE, TOUCH_PRESS_DELTA, TOUCH_WAKE_DELTA.
@@ -30,7 +31,7 @@ void calibrate() {
   pressed = average(3000);
   Serial.printf("Touched:   %lu\n", (unsigned long)pressed);
 
-  if (pressed <= idle) {
+  if (idle == 0 || pressed <= idle) {
     Serial.println("FAIL: touching did not raise the reading. Check the D0 wire, R13, and that the pad is not grounded.");
     return;
   }
@@ -40,6 +41,7 @@ void calibrate() {
   Serial.printf("Change: +%lu (x%.2f). %s\n", (unsigned long)delta, ratio,
                 ratio > 1.2f ? "PASS - clear change" : "WEAK - shorten the wire or enlarge the pad");
 
+  if (ratio <= 1.2f) { Serial.println("FAIL: improve touch margin before calibration"); return; }
   Serial.println("\nCopy into code/bob/config.h:");
   Serial.printf("  constexpr uint32_t TOUCH_IDLE        = %lu;\n", (unsigned long)idle);
   Serial.printf("  constexpr uint32_t TOUCH_PRESS_DELTA = %lu;\n", (unsigned long)pressDelta);
@@ -47,7 +49,18 @@ void calibrate() {
   Serial.println("\nLive readings follow. Press Enter to calibrate again.");
 }
 
+
+// Reset the retained expander latch BEFORE any startup delay.
+static void benchSafeBoot() {
+  for (int p : {D2, D3, D8, D9}) { digitalWrite(p, LOW); pinMode(p, OUTPUT); }
+  Wire.begin(D4, D5, 100000); Wire.setTimeOut(10);
+  for (uint8_t a : {0x20, 0x38}) {
+    Wire.beginTransmission(a); Wire.write(0xFF); Wire.endTransmission();
+  }
+}
+
 void setup() {
+  benchSafeBoot();
   Serial.begin(115200);
   delay(1500);
   Serial.println("\n=== T05 touch pad ===");

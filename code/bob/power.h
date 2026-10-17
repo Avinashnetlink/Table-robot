@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-enum class TouchEvent : uint8_t { None, Tap, Hold };
+enum class TouchEvent : uint8_t { None, Press, Tap, Hold };
 
 void touchBegin();
 TouchEvent touchService();  // call every loop; Hold fires once after UNLOCK_HOLD_MS
